@@ -66,14 +66,13 @@ try {
                             <th>Matrícula</th>
                             <th>Contatos</th>
                             <th>E-mail</th>
-                            <th>Datas (Criação/Modif.)</th>
                             <th class="text-end pe-3">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if(empty($alunos)): ?>
                             <tr>
-                                <td colspan="8" class="text-center py-4 text-muted">Nenhum registro encontrado.</td>
+                                <td colspan="7" class="text-center py-4 text-muted">Nenhum registro encontrado.</td>
                             </tr>
                         <?php else: ?>
                             <?php foreach ($alunos as $aluno): ?>
@@ -101,11 +100,10 @@ try {
                                         <i class="fa-solid fa-envelope me-1"></i> <?= htmlspecialchars($aluno['email']) ?>
                                     <?php endif; ?>
                                 </td>
-                                <td class="info-secundaria">
-                                    <span title="Criado em"><i class="fa-regular fa-calendar-plus me-1"></i><?= $aluno['criado_em'] ?></span><br>
-                                    <span title="Modificado em" class="text-muted"><i class="fa-regular fa-calendar-check me-1"></i><?= $aluno['modificado_em'] ?></span>
-                                </td>
                                 <td class="text-end pe-3">
+                                    <button onclick="visualizarRegistro('aluno', <?= $aluno['id'] ?>)" class="btn btn-sm btn-outline-info me-1" title="Visualizar">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
                                     <button onclick="abrirModal('form_aluno.php?id=<?= $aluno['id'] ?>')" class="btn btn-sm btn-outline-primary" title="Editar">
                                         <i class="fa-solid fa-pen"></i>
                                     </button>
@@ -118,6 +116,27 @@ try {
             </div>
         </div>
     </div>
+</div>
+
+<!-- Modal de Visualização Genérico -->
+<div class="modal fade" id="modalVisualizar" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered"> 
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-light py-2">
+        <h5 class="modal-title fs-6 fw-bold text-secondary"><i class="fa-solid fa-info-circle me-2"></i>Detalhes do Registro</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div id="conteudoVisualizar">
+          <div class="text-center py-3">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Carregando...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="modal fade" id="modalEditor" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
@@ -148,7 +167,21 @@ try {
         window.location.reload();
     }
 
-    // Fecha o modal automaticamente se o iframe redirecionar para uma página de sucesso (ex: listar)
+    function visualizarRegistro(tipo, id) {
+        var modal = new bootstrap.Modal(document.getElementById('modalVisualizar'));
+        modal.show();
+        
+        fetch('visualizar.php?tipo=' + tipo + '&id=' + id)
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('conteudoVisualizar').innerHTML = data;
+            })
+            .catch(error => {
+                document.getElementById('conteudoVisualizar').innerHTML = 
+                    '<div class="alert alert-danger">Erro ao carregar dados.</div>';
+            });
+    }
+
     document.getElementById('iframeEditor').onload = function() {
         try {
             if (this.contentWindow.location.href.indexOf('listar') !== -1) {

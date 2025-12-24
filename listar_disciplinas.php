@@ -68,14 +68,13 @@ try {
                             <th>Nome da Disciplina</th>
                             <th>Período</th>
                             <th>Professor Responsável</th>
-                            <th>Datas (Criação/Modif.)</th>
                             <th class="text-end pe-3">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         <?php if(empty($disciplinas)): ?>
                             <tr>
-                                <td colspan="6" class="text-center py-4 text-muted">Nenhum registro encontrado.</td>
+                                <td colspan="5" class="text-center py-4 text-muted">Nenhum registro encontrado.</td>
                             </tr>
                         <?php else: ?>
                             <?php foreach ($disciplinas as $disc): ?>
@@ -98,11 +97,10 @@ try {
                                         </span>
                                     <?php endif; ?>
                                 </td>
-                                <td class="info-secundaria">
-                                    <span title="Criado em"><i class="fa-regular fa-calendar-plus me-1"></i><?= $disc['criado_em'] ?></span><br>
-                                    <span title="Modificado em" class="text-muted"><i class="fa-regular fa-calendar-check me-1"></i><?= $disc['modificado_em'] ?></span>
-                                </td>
                                 <td class="text-end pe-3">
+                                    <button onclick="visualizarDisciplina(<?= $disc['id'] ?>)" class="btn btn-sm btn-outline-info me-1" title="Visualizar">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
                                     <button onclick="abrirModal('form_disciplina.php?id=<?= $disc['id'] ?>')" class="btn btn-sm btn-outline-primary" title="Editar">
                                         <i class="fa-solid fa-pen"></i>
                                     </button>
@@ -115,6 +113,27 @@ try {
             </div>
         </div>
     </div>
+</div>
+
+<!-- Modal de Visualização -->
+<div class="modal fade" id="modalVisualizar" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered"> 
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-light py-2">
+        <h5 class="modal-title fs-6 fw-bold text-secondary"><i class="fa-solid fa-info-circle me-2"></i>Detalhes da Disciplina</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div id="conteudoVisualizar">
+          <div class="text-center py-3">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Carregando...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="modal fade" id="modalEditor" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
@@ -143,6 +162,23 @@ try {
     function fecharModal() {
         document.getElementById('iframeEditor').src = '';
         window.location.reload();
+    }
+
+    function visualizarDisciplina(id) {
+        // Abre o modal
+        var modal = new bootstrap.Modal(document.getElementById('modalVisualizar'));
+        modal.show();
+        
+        // Faz requisição AJAX para buscar os detalhes usando o visualizador genérico
+        fetch('visualizar.php?tipo=disciplina&id=' + id)
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('conteudoVisualizar').innerHTML = data;
+            })
+            .catch(error => {
+                document.getElementById('conteudoVisualizar').innerHTML = 
+                    '<div class="alert alert-danger">Erro ao carregar dados.</div>';
+            });
     }
 
     // Fecha o modal automaticamente se o iframe redirecionar para uma página de sucesso (ex: listar)
