@@ -104,7 +104,7 @@ $config = [
             ['label' => 'Nome do Procedimento', 'campo' => 'nome', 'icone' => 'fa-tooth', 'tipo' => 'text', 'negrito' => true],
             ['label' => 'Código', 'campo' => 'codigo', 'icone' => 'fa-barcode', 'tipo' => 'code'],
             ['label' => 'Código SUS', 'campo' => 'codigo_sus', 'icone' => 'fa-hashtag', 'tipo' => 'code'],
-            ['label' => 'Quantidade Necessária', 'campo' => 'qtd_necessaria', 'icone' => 'fa-sort-numeric-up', 'tipo' => 'badge'],
+            ['label' => 'Quantidade Necessária', 'campo' => 'qtd_necessario', 'icone' => 'fa-sort-numeric-up', 'tipo' => 'badge'],
             ['label' => 'Data de Criação', 'campo' => 'created', 'icone' => 'fa-calendar-plus', 'tipo' => 'data'],
             ['label' => 'Última Modificação', 'campo' => 'modified', 'icone' => 'fa-calendar-check', 'tipo' => 'data']
         ],
@@ -114,7 +114,7 @@ $config = [
                 nome, 
                 codigo, 
                 codigo_sus,
-                qtd_necessaria,
+                qtd_necessario,
                 DATE_FORMAT(created, '%d/%m/%Y às %H:%i') as created,
                 DATE_FORMAT(modified, '%d/%m/%Y às %H:%i') as modified
             FROM procedimentos

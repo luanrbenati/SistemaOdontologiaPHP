@@ -222,7 +222,8 @@ function renderizarMenu($pagina_atual) {
                         break;
                     
                     case 'grupos':
-                        echo "<div class='p-5 text-center text-muted'><h3>Gestão de Grupos</h3><p>Em desenvolvimento...</p></div>";
+                        if (file_exists('listar_grupos.php')) include 'listar_grupos.php';
+                        else echo "<div class='alert alert-warning m-3'>Arquivo listar_grupos.php não encontrado.</div>";
                         break;
 
                     default:
