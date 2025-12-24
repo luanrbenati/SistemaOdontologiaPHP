@@ -1,50 +1,61 @@
 <?php
+// === IMPORTANTE: INICIAR SESSÃO PARA PEGAR O USUÁRIO LOGADO ===
+session_start();
+
 require_once 'conexao.php';
 header('Content-Type: application/json');
 
-// Recebe o JSON
 $input = file_get_contents('php://input');
 $dados = json_decode($input, true);
 
 if (!$dados) {
-    echo json_encode(['sucesso' => false, 'erro' => 'Sem dados recebidos']);
+    echo json_encode(['sucesso' => false, 'erro' => 'Sem dados']);
     exit;
 }
 
+// Verifica se o usuário está logado
+if (!isset($_SESSION['user_id'])) {
+    // Se a sessão não tiver user_id, tenta usar um ID padrão ou retorna erro
+    // echo json_encode(['sucesso' => false, 'erro' => 'Usuário não logado']); exit;
+    $usuario_logado_id = 1; // ID de fallback caso a sessão falhe (PERIGOSO EM PRODUÇÃO)
+} else {
+    $usuario_logado_id = $_SESSION['user_id'];
+}
+
 try {
-    // 1. Prepara as datas
     $timestamp = strtotime($dados['start']);
     $data_atendimento = date('Y-m-d', $timestamp);
     $hora = date('H:i', $timestamp);
-    $data_solicitacao = date('Y-m-d'); // Preenche com a data de hoje (obrigatório no seu banco)
+    $data_solicitacao = date('Y-m-d'); 
 
-    // 2. Valores Padrão para campos que existem na sua tabela (Print 3)
-    // Ajuste esses IDs conforme a necessidade ou pegue da sessão do usuário
-    $turma_id = 1;      // ID de uma turma padrão
-    $perfil_id = 1;     // ID de um perfil padrão
-    $professor_id = 1;  // ID de um professor padrão (ou null se permitir)
-    $status_id = 1;     // 1 = Aguardando
+    // Valores Padrão
+    $perfil_id = 1;     
+    $status_id = 1;     
 
-    // 3. SQL Ajustado para SUAS colunas (Print 2)
+    // SQL ATUALIZADO COM acl_usuario_id E turma_id vindo do form
     $sql = "INSERT INTO marcacoes (
                 paciente_id, 
+                aluno_id,        
+                professor_id,    
+                turma_id,         -- Vem do form
+                acl_usuario_id,   -- Vem da SESSÃO (Quem agendou)
                 data_atendimento, 
                 hora, 
                 data_solicitacao, 
                 obs, 
-                turma_id, 
-                professor_id,
                 perfil_id,
                 status_marcacao_id, 
                 created
             ) VALUES (
                 :paciente, 
+                :aluno,
+                :prof,
+                :turma,
+                :usuario,
                 :data_atend, 
                 :hora, 
                 :data_solic,
                 :obs, 
-                :turma, 
-                :prof,
                 :perfil,
                 :status, 
                 NOW()
@@ -53,12 +64,14 @@ try {
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
         ':paciente'   => $dados['paciente_id'],
+        ':aluno'      => $dados['aluno_id'],
+        ':prof'       => $dados['professor_id'],
+        ':turma'      => $dados['turma_id'],      // Agora dinâmico
+        ':usuario'    => $usuario_logado_id,      // ID de quem está logado
         ':data_atend' => $data_atendimento,
         ':hora'       => $hora,
         ':data_solic' => $data_solicitacao,
         ':obs'        => $dados['obs'] ?? '',
-        ':turma'      => $turma_id,
-        ':prof'       => $professor_id,
         ':perfil'     => $perfil_id,
         ':status'     => $status_id
     ]);
