@@ -112,7 +112,7 @@ try {
                                         <span class="text-muted fst-italic">Sem monitor</span>
                                     <?php endif; ?>
                                 </td>
-                                <td class="text-end pe-3">
+                               <td class="text-end pe-3 text-nowrap">
                                     <button onclick="visualizarRegistro('turma', <?= $turma['id'] ?>)" class="btn btn-sm btn-outline-info me-1" title="Visualizar">
                                         <i class="fa-solid fa-eye"></i>
                                     </button>
@@ -183,7 +183,7 @@ try {
         var modal = new bootstrap.Modal(document.getElementById('modalVisualizar'));
         modal.show();
         
-        fetch('visualizar_generico.php?tipo=' + tipo + '&id=' + id)
+        fetch('visualizar.php?tipo=' + tipo + '&id=' + id)
             .then(response => response.text())
             .then(data => {
                 document.getElementById('conteudoVisualizar').innerHTML = data;

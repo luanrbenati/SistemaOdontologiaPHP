@@ -87,7 +87,7 @@ try {
                                         <?= $proc['qtd_necessario'] ?>
                                     </span>
                                 </td>
-                                <td class="text-end pe-3">
+                                <td class="text-end pe-3 text-nowrap">
                                     <button onclick="visualizarRegistro('procedimento', <?= $proc['id'] ?>)" class="btn btn-sm btn-outline-info me-1" title="Visualizar">
                                         <i class="fa-solid fa-eye"></i>
                                     </button>
