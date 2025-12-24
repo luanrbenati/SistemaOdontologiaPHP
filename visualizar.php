@@ -11,6 +11,7 @@ if (!$tipo || !$id) {
 
 // Configuração das tabelas e campos
 $config = [
+    // --- CADASTROS BÁSICOS ---
     'disciplina' => [
         'tabela' => 'disciplinas',
         'titulo' => 'Disciplina',
@@ -24,12 +25,8 @@ $config = [
         ],
         'sql' => "
             SELECT 
-                d.id, 
-                d.nome, 
-                d.periodo, 
-                d.professor_id,
-                p.nome as professor_nome,
-                p.siape as professor_siape,
+                d.id, d.nome, d.periodo, d.professor_id,
+                p.nome as professor_nome, p.siape as professor_siape,
                 DATE_FORMAT(d.created, '%d/%m/%Y às %H:%i') as created,
                 DATE_FORMAT(d.modified, '%d/%m/%Y às %H:%i') as modified
             FROM disciplinas d
@@ -53,16 +50,10 @@ $config = [
         ],
         'sql' => "
             SELECT 
-                id, 
-                nome, 
-                siape, 
-                ativo, 
-                telefone1, 
-                telefone2,
+                id, nome, siape, ativo, telefone1, telefone2,
                 DATE_FORMAT(created, '%d/%m/%Y às %H:%i') as created,
                 DATE_FORMAT(modified, '%d/%m/%Y às %H:%i') as modified
-            FROM professores
-            WHERE id = ?
+            FROM professores WHERE id = ?
         "
     ],
     
@@ -82,20 +73,13 @@ $config = [
         ],
         'sql' => "
             SELECT 
-                id, 
-                nome, 
-                matricula, 
-                ativo, 
-                telefone1, 
-                telefone2,
-                email,
+                id, nome, matricula, ativo, telefone1, telefone2, email,
                 DATE_FORMAT(created, '%d/%m/%Y às %H:%i') as created,
                 DATE_FORMAT(modified, '%d/%m/%Y às %H:%i') as modified
-            FROM alunos
-            WHERE id = ?
+            FROM alunos WHERE id = ?
         "
     ],
-    
+
     'procedimento' => [
         'tabela' => 'procedimentos',
         'titulo' => 'Procedimento',
@@ -104,28 +88,102 @@ $config = [
             ['label' => 'Nome do Procedimento', 'campo' => 'nome', 'icone' => 'fa-tooth', 'tipo' => 'text', 'negrito' => true],
             ['label' => 'Código', 'campo' => 'codigo', 'icone' => 'fa-barcode', 'tipo' => 'code'],
             ['label' => 'Código SUS', 'campo' => 'codigo_sus', 'icone' => 'fa-hashtag', 'tipo' => 'code'],
-            ['label' => 'Quantidade Necessária', 'campo' => 'qtd_necessario', 'icone' => 'fa-sort-numeric-up', 'tipo' => 'badge'],
+            ['label' => 'Qtd. Necessária', 'campo' => 'qtd_necessario', 'icone' => 'fa-sort-numeric-up', 'tipo' => 'badge'],
             ['label' => 'Data de Criação', 'campo' => 'created', 'icone' => 'fa-calendar-plus', 'tipo' => 'data'],
             ['label' => 'Última Modificação', 'campo' => 'modified', 'icone' => 'fa-calendar-check', 'tipo' => 'data']
         ],
         'sql' => "
             SELECT 
-                id, 
-                nome, 
-                codigo, 
-                codigo_sus,
-                qtd_necessario,
+                id, nome, codigo, codigo_sus, qtd_necessario,
                 DATE_FORMAT(created, '%d/%m/%Y às %H:%i') as created,
                 DATE_FORMAT(modified, '%d/%m/%Y às %H:%i') as modified
-            FROM procedimentos
-            WHERE id = ?
+            FROM procedimentos WHERE id = ?
+        "
+    ],
+
+    // --- NOVOS TIPOS ADICIONADOS ---
+
+    'perfil' => [
+        'tabela' => 'perfis',
+        'titulo' => 'Perfil',
+        'campos' => [
+            ['label' => 'ID', 'campo' => 'id', 'icone' => 'fa-hashtag', 'tipo' => 'code'],
+            ['label' => 'Nome do Perfil', 'campo' => 'nome', 'icone' => 'fa-id-badge', 'tipo' => 'text', 'negrito' => true],
+            ['label' => 'Data de Criação', 'campo' => 'created', 'icone' => 'fa-calendar-plus', 'tipo' => 'data'],
+            ['label' => 'Última Modificação', 'campo' => 'modified', 'icone' => 'fa-calendar-check', 'tipo' => 'data']
+        ],
+        'sql' => "
+            SELECT 
+                id, nome,
+                DATE_FORMAT(created, '%d/%m/%Y às %H:%i') as created,
+                DATE_FORMAT(modified, '%d/%m/%Y às %H:%i') as modified
+            FROM perfis WHERE id = ?
+        "
+    ],
+
+    'turma' => [
+        'tabela' => 'turmas',
+        'titulo' => 'Turma',
+        'campos' => [
+            ['label' => 'ID', 'campo' => 'id', 'icone' => 'fa-hashtag', 'tipo' => 'code'],
+            ['label' => 'Nome da Turma', 'campo' => 'nome', 'icone' => 'fa-users-rectangle', 'tipo' => 'text', 'negrito' => true],
+            ['label' => 'Semestre', 'campo' => 'semestre', 'icone' => 'fa-calendar', 'tipo' => 'badge', 'sufixo' => 'º'],
+            ['label' => 'Ano', 'campo' => 'ano', 'icone' => 'fa-calendar-days', 'tipo' => 'text'],
+            ['label' => 'Status', 'campo' => 'ativo', 'icone' => 'fa-circle-check', 'tipo' => 'status'],
+            ['label' => 'Data de Criação', 'campo' => 'created', 'icone' => 'fa-calendar-plus', 'tipo' => 'data'],
+            ['label' => 'Última Modificação', 'campo' => 'modified', 'icone' => 'fa-calendar-check', 'tipo' => 'data']
+        ],
+        'sql' => "
+            SELECT 
+                id, nome, semestre, ano, ativo,
+                DATE_FORMAT(created, '%d/%m/%Y às %H:%i') as created,
+                DATE_FORMAT(modified, '%d/%m/%Y às %H:%i') as modified
+            FROM turmas WHERE id = ?
+        "
+    ],
+
+    'grupo' => [ // Tabela 'groups' geralmente
+        'tabela' => 'groups',
+        'titulo' => 'Grupo de Acesso',
+        'campos' => [
+            ['label' => 'ID', 'campo' => 'id', 'icone' => 'fa-hashtag', 'tipo' => 'code'],
+            ['label' => 'Nome do Grupo', 'campo' => 'name', 'icone' => 'fa-shield-halved', 'tipo' => 'text', 'negrito' => true],
+            ['label' => 'Descrição', 'campo' => 'description', 'icone' => 'fa-align-left', 'tipo' => 'text'],
+            ['label' => 'Data de Criação', 'campo' => 'created', 'icone' => 'fa-calendar-plus', 'tipo' => 'data'],
+            ['label' => 'Última Modificação', 'campo' => 'modified', 'icone' => 'fa-calendar-check', 'tipo' => 'data']
+        ],
+        'sql' => "
+            SELECT 
+                id, name, description,
+                DATE_FORMAT(created, '%d/%m/%Y às %H:%i') as created,
+                DATE_FORMAT(modified, '%d/%m/%Y às %H:%i') as modified
+            FROM groups WHERE id = ?
+        "
+    ],
+    
+    'usuario' => [
+        'tabela' => 'users',
+        'titulo' => 'Usuário',
+        'campos' => [
+            ['label' => 'ID', 'campo' => 'id', 'icone' => 'fa-hashtag', 'tipo' => 'code'],
+            ['label' => 'Nome', 'campo' => 'name', 'icone' => 'fa-user', 'tipo' => 'text', 'negrito' => true],
+            ['label' => 'Login', 'campo' => 'username', 'icone' => 'fa-key', 'tipo' => 'code'],
+            ['label' => 'Status', 'campo' => 'status', 'icone' => 'fa-circle-check', 'tipo' => 'status'],
+            ['label' => 'Data de Criação', 'campo' => 'created', 'icone' => 'fa-calendar-plus', 'tipo' => 'data']
+        ],
+        'sql' => "
+            SELECT 
+                id, name, username, status,
+                DATE_FORMAT(created, '%d/%m/%Y às %H:%i') as created,
+                DATE_FORMAT(modified, '%d/%m/%Y às %H:%i') as modified
+            FROM users WHERE id = ?
         "
     ]
 ];
 
 // Verifica se o tipo existe
 if (!isset($config[$tipo])) {
-    echo '<div class="alert alert-danger">Tipo inválido.</div>';
+    echo '<div class="alert alert-danger">Tipo inválido: <strong>' . htmlspecialchars($tipo) . '</strong> não configurado.</div>';
     exit;
 }
 
@@ -142,7 +200,7 @@ try {
     }
     
 } catch (Exception $e) {
-    echo '<div class="alert alert-danger">Erro: ' . $e->getMessage() . '</div>';
+    echo '<div class="alert alert-danger">Erro SQL: ' . $e->getMessage() . '</div>';
     exit;
 }
 
@@ -150,9 +208,13 @@ try {
 function renderizarCampo($campo, $dados) {
     $valor = $dados[$campo['campo']] ?? null;
     
-    // Se o campo estiver vazio, não exibe a linha
-    if (empty($valor) && $campo['tipo'] !== 'status') {
-        return null;
+    // Se o campo estiver vazio e não for status (que pode ser 0) e nem html (que pode ser vazio), retorna null
+    if ((empty($valor) && $valor !== '0' && $valor !== 0) && $campo['tipo'] !== 'status') {
+         if ($campo['tipo'] === 'html' && $campo['campo'] === 'resumo_horarios') {
+             $valor = "<em class='text-muted'>Sem restrições</em>";
+         } else {
+             return null;
+         }
     }
     
     $html = '<div class="info-row">';
@@ -163,7 +225,7 @@ function renderizarCampo($campo, $dados) {
     
     switch ($campo['tipo']) {
         case 'code':
-            $html .= '<code class="text-secondary fw-bold">#' . htmlspecialchars($valor) . '</code>';
+            $html .= '<code class="text-primary fw-bold">#' . htmlspecialchars($valor) . '</code>';
             break;
             
         case 'badge':
@@ -173,20 +235,23 @@ function renderizarCampo($campo, $dados) {
             
         case 'status':
             if ($valor == 1) {
-                $html .= '<span class="badge bg-success">Ativo</span>';
+                $html .= '<span class="badge bg-success bg-opacity-75">Ativo</span>';
             } else {
-                $html .= '<span class="badge bg-danger">Inativo</span>';
+                $html .= '<span class="badge bg-danger bg-opacity-75">Inativo</span>';
             }
+            break;
+        
+        case 'html':
+            $html .= '<span style="line-height: 1.6;">' . $valor . '</span>';
             break;
             
         case 'data':
-            $html .= '<span class="text-muted">' . htmlspecialchars($valor) . '</span>';
+            $html .= '<span class="text-muted small">' . htmlspecialchars($valor) . '</span>';
             break;
             
         default: // text
             $html .= htmlspecialchars($valor);
             
-            // Campo extra (como SIAPE do professor)
             if (isset($campo['campo_extra']) && !empty($dados[$campo['campo_extra']])) {
                 $html .= '<br><small class="text-muted">';
                 $html .= $campo['label_extra'] . ': <code>' . htmlspecialchars($dados[$campo['campo_extra']]) . '</code>';
@@ -212,12 +277,14 @@ function renderizarCampo($campo, $dados) {
     }
     .info-label { 
         font-weight: 600; 
-        color: #555; 
-        font-size: 0.85rem;
+        color: #6c757d; 
+        font-size: 0.8rem;
+        text-transform: uppercase;
         margin-bottom: 4px;
+        letter-spacing: 0.5px;
     }
     .info-value { 
-        color: #333; 
+        color: #2c3e50; 
         font-size: 0.95rem;
     }
 </style>
