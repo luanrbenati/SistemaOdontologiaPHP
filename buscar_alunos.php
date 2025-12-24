@@ -1,16 +1,12 @@
 <?php
 require_once 'conexao.php';
 
-// Recebe o ID da turma via GET
 $turma_id = $_GET['turma_id'] ?? null;
-
-// Array para retorno
 $alunos = [];
 
 if ($turma_id) {
     try {
-        // === SQL CORRIGIDO ===
-        // Faz a ligação: Tabela Alunos (a) -> Tabela de Ligação (at) -> ID da Turma
+        // Faz a busca na tabela ALUNOS unindo com ALUNOS_TURMAS
         $sql = "
             SELECT a.id, a.nome 
             FROM alunos a
@@ -25,13 +21,10 @@ if ($turma_id) {
         $alunos = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
     } catch (Exception $e) {
-        // Em caso de erro, retorna array vazio
-        // Se quiser debugar, pode descomentar a linha abaixo:
-        // echo json_encode(['erro' => $e->getMessage()]); exit;
+        // Retorna vazio em caso de erro
     }
 }
 
-// Retorna JSON para o JavaScript
 header('Content-Type: application/json');
 echo json_encode($alunos);
 ?>

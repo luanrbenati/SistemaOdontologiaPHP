@@ -1,4 +1,5 @@
 <?php 
+// 1. ATIVAR ERROS PARA DEBUG (Se der tela branca, ele avisa)
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
@@ -7,15 +8,17 @@ require_once 'conexao.php';
 $pacientes = [];
 $professores = [];
 $turmas = [];
-$perfis = []; // Nova variável
+$perfis = [];
 
 try {
-    // Buscas existentes
+    // Buscas para preencher os selects
     $pacientes = $pdo->query("SELECT id, nome FROM pacientes ORDER BY nome ASC")->fetchAll(PDO::FETCH_ASSOC);
     $professores = $pdo->query("SELECT id, nome FROM professores WHERE ativo = 1 ORDER BY nome ASC")->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Tabela Turmas (id, nome)
     $turmas = $pdo->query("SELECT id, nome FROM turmas ORDER BY nome DESC")->fetchAll(PDO::FETCH_ASSOC);
     
-    // === NOVA BUSCA: PERFIS ===
+    // Tabela Perfis (id, nome)
     $perfis = $pdo->query("SELECT id, nome FROM perfis ORDER BY nome ASC")->fetchAll(PDO::FETCH_ASSOC);
 
 } catch (Exception $e) {
@@ -33,7 +36,7 @@ try {
 <style>
     .fc-event-main { cursor: pointer; color: #fff; font-size: 0.85rem; }
     .fc-toolbar-title { font-size: 1.25rem !important; }
-    .select2-container { z-index: 9999; }
+    .select2-container { z-index: 9999; } /* Garante que o select fique acima do modal */
 </style>
 
 <div class="container-fluid p-4">
@@ -60,17 +63,23 @@ try {
             </div>
             <div class="modal-body">
                 <form id="formAgendamento">
-                    <input type="hidden" id="start_iso"> 
+                    <input type="hidden" name="data_atendimento" id="data_atendimento"> 
                     
-                    <div class="mb-3">
-                        <label class="form-label small fw-bold">Data/Hora</label>
-                        <input type="text" class="form-control form-control-sm bg-light" id="view_data" readonly>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Data</label>
+                            <input type="text" class="form-control form-control-sm bg-light" id="view_data_ptbr" readonly>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label small fw-bold">Horário</label>
+                            <input type="time" class="form-control form-control-sm" name="hora" id="input_hora" required>
+                        </div>
                     </div>
 
                     <div class="mb-3">
                         <label class="form-label small fw-bold">Perfil / Clínica</label>
                         <select class="form-select select2-modal" name="perfil_id" id="select_perfil" style="width: 100%;">
-                            <option value="">Selecione o tipo de atendimento...</option>
+                            <option value="">Selecione...</option>
                             <?php foreach($perfis as $p): ?>
                                 <option value="<?= $p['id'] ?>"><?= htmlspecialchars($p['nome']) ?></option>
                             <?php endforeach; ?>
@@ -99,8 +108,8 @@ try {
                             <label class="form-label small fw-bold">Paciente</label>
                             <select class="form-select select2-modal" name="paciente_id" id="select_paciente" style="width: 100%;">
                                 <option value="">Pesquisar...</option>
-                                <?php foreach($pacientes as $pac): ?>
-                                    <option value="<?= $pac['id'] ?>"><?= htmlspecialchars($pac['nome']) ?></option>
+                                <?php foreach($pacientes as $p): ?>
+                                    <option value="<?= $p['id'] ?>"><?= htmlspecialchars($p['nome']) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -134,11 +143,17 @@ try {
     var calendar; 
     var modal; 
 
+    // Inicialização segura após o carregamento da página
     document.addEventListener('DOMContentLoaded', function() {
         var modalEl = document.getElementById('modalAgendamento');
+        
+        // Verifica se o Bootstrap carregou para evitar erro no console
         if (typeof bootstrap !== 'undefined') {
             modal = new bootstrap.Modal(modalEl);
+        } else {
+            console.error("Bootstrap não encontrado. Verifique o dashboard.");
         }
+
         iniciarCalendario();
         inicializarSelect2();
     });
@@ -166,11 +181,12 @@ try {
                             alunoSelect.append(new Option(aluno.nome, aluno.id));
                         });
                     } else {
-                        alunoSelect.append('<option value="">Nenhum aluno encontrado</option>');
+                        alunoSelect.append('<option value="">Nenhum aluno encontrado nesta turma</option>');
                     }
                     alunoSelect.prop('disabled', false);
                 })
                 .catch(err => {
+                    console.error(err);
                     alunoSelect.empty().append('<option value="">Erro ao carregar</option>');
                 });
         } else {
@@ -197,13 +213,32 @@ try {
             events: 'api_eventos.php',
 
             select: function(info) {
+                // Limpa o formulário
                 $('#formAgendamento')[0].reset();
                 $('.select2-modal').val(null).trigger('change');
                 $('#select_aluno').prop('disabled', true).html('<option>Selecione a turma...</option>');
                 
-                document.getElementById('start_iso').value = info.startStr;
-                let dataFormatada = new Date(info.startStr).toLocaleString('pt-BR');
-                document.getElementById('view_data').value = dataFormatada;
+                // === LÓGICA DE DATA E HORA ===
+                let dataClicada = new Date(info.startStr);
+                
+                // 1. Preenche data oculta para o banco (YYYY-MM-DD)
+                let dataIso = info.startStr.split('T')[0];
+                document.getElementById('data_atendimento').value = dataIso;
+
+                // 2. Preenche data visual (PT-BR)
+                let visualData = dataClicada.toLocaleDateString('pt-BR'); // Ajuste simples
+                // Se a data vier errada por fuso horário, usamos a string direta:
+                let partesData = dataIso.split('-');
+                document.getElementById('view_data_ptbr').value = partesData[2]+'/'+partesData[1]+'/'+partesData[0];
+
+                // 3. Preenche a Hora
+                let horaPadrao = "08:00";
+                if(info.startStr.includes('T')) {
+                    // Se clicou na visão de dia/semana, pega a hora exata
+                    let partesHora = info.startStr.split('T')[1].split(':');
+                    horaPadrao = partesHora[0] + ':' + partesHora[1];
+                }
+                document.getElementById('input_hora').value = horaPadrao;
                 
                 if(modal) modal.show();
             },
@@ -216,20 +251,25 @@ try {
     }
 
     function salvarEvento() {
+        // Coleta os dados incluindo a HORA separada e o PERFIL
         const dados = {
-            start: $('#start_iso').val(),
-            paciente_id: $('#select_paciente').val(),
-            aluno_id: $('#select_aluno').val(),
-            professor_id: $('#select_professor').val(),
-            turma_id: $('#select_turma').val(),
-            perfil_id: $('#select_perfil').val(), // === NOVO DADO ===
-            obs: $('textarea[name="obs"]').val()
+            data_atendimento: $('#data_atendimento').val(),
+            hora:             $('#input_hora').val(),
+            paciente_id:      $('#select_paciente').val(),
+            aluno_id:         $('#select_aluno').val(),
+            professor_id:     $('#select_professor').val(),
+            turma_id:         $('#select_turma').val(),
+            perfil_id:        $('#select_perfil').val(),
+            obs:              $('textarea[name="obs"]').val()
         };
 
-        if(!dados.perfil_id) { alert('Selecione o Perfil/Clínica'); return; } // Validação
+        // Validações
+        if(!dados.hora) { alert('Informe o horário'); return; }
+        if(!dados.perfil_id) { alert('Selecione o Perfil/Clínica'); return; }
         if(!dados.turma_id) { alert('Selecione a Turma'); return; }
         if(!dados.paciente_id) { alert('Selecione o Paciente'); return; }
         if(!dados.aluno_id) { alert('Selecione o Aluno'); return; }
+        if(!dados.professor_id) { alert('Selecione o Professor'); return; }
 
         fetch('salvar_agendamento.php', {
             method: 'POST',
