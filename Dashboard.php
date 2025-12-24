@@ -23,13 +23,21 @@ function renderizarMenu($pagina_atual) {
     $is_manutencao_active = in_array($pagina_atual, $paginas_manutencao);
     $is_cadastros_active = in_array($pagina_atual, $paginas_cadastros);
     
+    // Controle de classes 'active'
     $active_home = ($pagina_atual == 'home') ? 'active' : '';
     $active_pacientes = ($pagina_atual == 'pacientes') ? 'active' : '';
+    
+    // === NOVO: Lógica para ativar o botão Agenda ===
+    $active_agenda = ($pagina_atual == 'agenda') ? 'active' : '';
 
     echo '
     <nav class="nav flex-column mt-2">
         <a class="nav-link ' . $active_home . '" href="?page=home">
             <i class="fa-solid fa-house me-2" style="width:20px"></i> Início
+        </a>
+
+        <a class="nav-link ' . $active_agenda . '" href="?page=agenda">
+            <i class="fa-solid fa-calendar-days me-2" style="width:20px"></i> Agenda
         </a>
 
         <a class="nav-link ' . $active_pacientes . '" href="?page=pacientes">
@@ -156,6 +164,12 @@ function renderizarMenu($pagina_atual) {
                             <h4 style="opacity: 0.6;">Bem-vindo ao D-SIGO</h4>
                             <p class="small" style="opacity: 0.6;">Selecione uma opção no menu lateral.</p>
                         </div>';
+                        break;
+
+                    // === NOVO CASE PARA A AGENDA ===
+                    case 'agenda':
+                        if (file_exists('agenda.php')) include 'agenda.php';
+                        else echo "<div class='alert alert-warning m-3'>Arquivo agenda.php não encontrado. Verifique se ele está na mesma pasta.</div>";
                         break;
 
                     case 'pacientes':
