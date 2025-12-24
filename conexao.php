@@ -17,6 +17,6 @@ try {
     $pdo = new PDO($dsn, $user, $pass, $options);
 } catch (\PDOException $e) {
     // Em produção, não mostre o erro na tela, grave num log
-    die("Erro de conexão com o banco de dados.");
+    die("Erro de conexão com o banco de dados. Teste do git");
 }
 ?>
