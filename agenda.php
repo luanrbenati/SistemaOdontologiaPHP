@@ -1,22 +1,22 @@
 <?php 
-// 1. ATIVAR ERROS PARA DEBUG
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 
 require_once 'conexao.php'; 
 
-// Variáveis para evitar erros de "undefined"
 $pacientes = [];
 $professores = [];
 $turmas = [];
+$perfis = []; // Nova variável
 
 try {
-    // Busca dados para os selects
+    // Buscas existentes
     $pacientes = $pdo->query("SELECT id, nome FROM pacientes ORDER BY nome ASC")->fetchAll(PDO::FETCH_ASSOC);
     $professores = $pdo->query("SELECT id, nome FROM professores WHERE ativo = 1 ORDER BY nome ASC")->fetchAll(PDO::FETCH_ASSOC);
-    
-    // Busca Turmas (Confirmado pelo seu print que a tabela existe e tem 'id' e 'nome')
     $turmas = $pdo->query("SELECT id, nome FROM turmas ORDER BY nome DESC")->fetchAll(PDO::FETCH_ASSOC);
+    
+    // === NOVA BUSCA: PERFIS ===
+    $perfis = $pdo->query("SELECT id, nome FROM perfis ORDER BY nome ASC")->fetchAll(PDO::FETCH_ASSOC);
 
 } catch (Exception $e) {
     echo "<div class='alert alert-danger m-3'>Erro ao carregar dados: " . $e->getMessage() . "</div>";
@@ -33,7 +33,7 @@ try {
 <style>
     .fc-event-main { cursor: pointer; color: #fff; font-size: 0.85rem; }
     .fc-toolbar-title { font-size: 1.25rem !important; }
-    .select2-container { z-index: 9999; } /* Garante que o select fique acima do modal */
+    .select2-container { z-index: 9999; }
 </style>
 
 <div class="container-fluid p-4">
@@ -68,6 +68,16 @@ try {
                     </div>
 
                     <div class="mb-3">
+                        <label class="form-label small fw-bold">Perfil / Clínica</label>
+                        <select class="form-select select2-modal" name="perfil_id" id="select_perfil" style="width: 100%;">
+                            <option value="">Selecione o tipo de atendimento...</option>
+                            <?php foreach($perfis as $p): ?>
+                                <option value="<?= $p['id'] ?>"><?= htmlspecialchars($p['nome']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
                         <label class="form-label small fw-bold">Turma</label>
                         <select class="form-select select2-modal" name="turma_id" id="select_turma" style="width: 100%;" onchange="carregarAlunos(this.value)">
                             <option value="">Selecione a turma...</option>
@@ -89,8 +99,8 @@ try {
                             <label class="form-label small fw-bold">Paciente</label>
                             <select class="form-select select2-modal" name="paciente_id" id="select_paciente" style="width: 100%;">
                                 <option value="">Pesquisar...</option>
-                                <?php foreach($pacientes as $p): ?>
-                                    <option value="<?= $p['id'] ?>"><?= htmlspecialchars($p['nome']) ?></option>
+                                <?php foreach($pacientes as $pac): ?>
+                                    <option value="<?= $pac['id'] ?>"><?= htmlspecialchars($pac['nome']) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
@@ -121,21 +131,14 @@ try {
 </div>
 
 <script>
-    // Declara as variáveis globais, mas NÃO inicia o modal aqui ainda
     var calendar; 
     var modal; 
 
-    // Só roda o código quando a página inteira (incluindo o Bootstrap do rodapé) carregar
     document.addEventListener('DOMContentLoaded', function() {
-        
-        // CORREÇÃO: Inicializa o Modal AQUI DENTRO
         var modalEl = document.getElementById('modalAgendamento');
         if (typeof bootstrap !== 'undefined') {
             modal = new bootstrap.Modal(modalEl);
-        } else {
-            console.error("Bootstrap não carregou corretamente.");
         }
-
         iniciarCalendario();
         inicializarSelect2();
     });
@@ -168,7 +171,6 @@ try {
                     alunoSelect.prop('disabled', false);
                 })
                 .catch(err => {
-                    console.error(err);
                     alunoSelect.empty().append('<option value="">Erro ao carregar</option>');
                 });
         } else {
@@ -195,17 +197,14 @@ try {
             events: 'api_eventos.php',
 
             select: function(info) {
-                // Reseta form
                 $('#formAgendamento')[0].reset();
                 $('.select2-modal').val(null).trigger('change');
                 $('#select_aluno').prop('disabled', true).html('<option>Selecione a turma...</option>');
                 
-                // Preenche Data
                 document.getElementById('start_iso').value = info.startStr;
                 let dataFormatada = new Date(info.startStr).toLocaleString('pt-BR');
                 document.getElementById('view_data').value = dataFormatada;
                 
-                // Abre Modal
                 if(modal) modal.show();
             },
             
@@ -223,9 +222,11 @@ try {
             aluno_id: $('#select_aluno').val(),
             professor_id: $('#select_professor').val(),
             turma_id: $('#select_turma').val(),
+            perfil_id: $('#select_perfil').val(), // === NOVO DADO ===
             obs: $('textarea[name="obs"]').val()
         };
 
+        if(!dados.perfil_id) { alert('Selecione o Perfil/Clínica'); return; } // Validação
         if(!dados.turma_id) { alert('Selecione a Turma'); return; }
         if(!dados.paciente_id) { alert('Selecione o Paciente'); return; }
         if(!dados.aluno_id) { alert('Selecione o Aluno'); return; }
