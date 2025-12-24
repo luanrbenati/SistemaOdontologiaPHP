@@ -1,44 +1,25 @@
 <?php 
-// 1. ATIVAR VISUALIZAÇÃO DE ERROS (Isso vai nos mostrar o problema)
+// 1. ATIVAR ERROS PARA DEBUG
 ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
 error_reporting(E_ALL);
 
-// Verifica se o arquivo de conexão existe antes de incluir
-if (!file_exists('conexao.php')) {
-    die("<div class='alert alert-danger'>Erro Fatal: O arquivo <strong>conexao.php</strong> não foi encontrado na pasta.</div>");
-}
 require_once 'conexao.php'; 
 
-// Variáveis iniciais
+// Variáveis para evitar erros de "undefined"
 $pacientes = [];
 $professores = [];
 $turmas = [];
 
 try {
-    // 1. Buscar Pacientes
-    $stmt = $pdo->query("SELECT id, nome FROM pacientes ORDER BY nome ASC");
-    $pacientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    // Busca dados para os selects
+    $pacientes = $pdo->query("SELECT id, nome FROM pacientes ORDER BY nome ASC")->fetchAll(PDO::FETCH_ASSOC);
+    $professores = $pdo->query("SELECT id, nome FROM professores WHERE ativo = 1 ORDER BY nome ASC")->fetchAll(PDO::FETCH_ASSOC);
+    
+    // Busca Turmas (Confirmado pelo seu print que a tabela existe e tem 'id' e 'nome')
+    $turmas = $pdo->query("SELECT id, nome FROM turmas ORDER BY nome DESC")->fetchAll(PDO::FETCH_ASSOC);
 
-    // 2. Buscar Professores
-    $stmt = $pdo->query("SELECT id, nome FROM professores WHERE ativo = 1 ORDER BY nome ASC");
-    $professores = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-    // 3. Buscar Turmas
-    // Sua tabela está correta (tem id e nome), então isso DEVE funcionar.
-    $stmt = $pdo->query("SELECT id, nome FROM turmas ORDER BY nome DESC");
-    $turmas = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-} catch (PDOException $e) {
-    // Se der erro no SQL, mostra aqui
-    echo "<div class='alert alert-danger m-3'>
-            <strong>Erro no Banco de Dados:</strong><br> " . $e->getMessage() . "
-          </div>";
 } catch (Exception $e) {
-    // Outros erros
-    echo "<div class='alert alert-danger m-3'>
-            <strong>Erro Geral:</strong><br> " . $e->getMessage() . "
-          </div>";
+    echo "<div class='alert alert-danger m-3'>Erro ao carregar dados: " . $e->getMessage() . "</div>";
 }
 ?>
 
@@ -52,7 +33,7 @@ try {
 <style>
     .fc-event-main { cursor: pointer; color: #fff; font-size: 0.85rem; }
     .fc-toolbar-title { font-size: 1.25rem !important; }
-    .select2-container { z-index: 9999; }
+    .select2-container { z-index: 9999; } /* Garante que o select fique acima do modal */
 </style>
 
 <div class="container-fluid p-4">
@@ -90,13 +71,9 @@ try {
                         <label class="form-label small fw-bold">Turma</label>
                         <select class="form-select select2-modal" name="turma_id" id="select_turma" style="width: 100%;" onchange="carregarAlunos(this.value)">
                             <option value="">Selecione a turma...</option>
-                            <?php if (!empty($turmas)): ?>
-                                <?php foreach($turmas as $t): ?>
-                                    <option value="<?= $t['id'] ?>"><?= htmlspecialchars($t['nome']) ?></option>
-                                <?php endforeach; ?>
-                            <?php else: ?>
-                                <option value="" disabled>Nenhuma turma encontrada</option>
-                            <?php endif; ?>
+                            <?php foreach($turmas as $t): ?>
+                                <option value="<?= $t['id'] ?>"><?= htmlspecialchars($t['nome']) ?></option>
+                            <?php endforeach; ?>
                         </select>
                     </div>
 
@@ -144,11 +121,21 @@ try {
 </div>
 
 <script>
+    // Declara as variáveis globais, mas NÃO inicia o modal aqui ainda
     var calendar; 
-    var modalEl = document.getElementById('modalAgendamento');
-    var modal = new bootstrap.Modal(modalEl);
+    var modal; 
 
+    // Só roda o código quando a página inteira (incluindo o Bootstrap do rodapé) carregar
     document.addEventListener('DOMContentLoaded', function() {
+        
+        // CORREÇÃO: Inicializa o Modal AQUI DENTRO
+        var modalEl = document.getElementById('modalAgendamento');
+        if (typeof bootstrap !== 'undefined') {
+            modal = new bootstrap.Modal(modalEl);
+        } else {
+            console.error("Bootstrap não carregou corretamente.");
+        }
+
         iniciarCalendario();
         inicializarSelect2();
     });
@@ -167,26 +154,22 @@ try {
         alunoSelect.empty().append('<option value="">Carregando...</option>').prop('disabled', true);
 
         if(turmaId) {
-            // Busca os alunos via AJAX
             fetch('buscar_alunos.php?turma_id=' + turmaId)
-                .then(response => {
-                    if (!response.ok) { throw new Error('Erro na rede'); }
-                    return response.json();
-                })
+                .then(response => response.json())
                 .then(data => {
                     alunoSelect.empty().append('<option value="">Selecione o aluno...</option>');
-                    if (data.length > 0) {
+                    if(data.length > 0) {
                         data.forEach(aluno => {
                             alunoSelect.append(new Option(aluno.nome, aluno.id));
                         });
                     } else {
-                        alunoSelect.append('<option value="">Nenhum aluno nesta turma</option>');
+                        alunoSelect.append('<option value="">Nenhum aluno encontrado</option>');
                     }
                     alunoSelect.prop('disabled', false);
                 })
                 .catch(err => {
-                    console.error("Erro:", err);
-                    alunoSelect.empty().append('<option value="">Erro ao buscar alunos</option>');
+                    console.error(err);
+                    alunoSelect.empty().append('<option value="">Erro ao carregar</option>');
                 });
         } else {
             alunoSelect.empty().append('<option value="">Selecione primeiro a turma...</option>');
@@ -212,18 +195,22 @@ try {
             events: 'api_eventos.php',
 
             select: function(info) {
+                // Reseta form
                 $('#formAgendamento')[0].reset();
                 $('.select2-modal').val(null).trigger('change');
                 $('#select_aluno').prop('disabled', true).html('<option>Selecione a turma...</option>');
                 
+                // Preenche Data
                 document.getElementById('start_iso').value = info.startStr;
                 let dataFormatada = new Date(info.startStr).toLocaleString('pt-BR');
                 document.getElementById('view_data').value = dataFormatada;
-                modal.show();
+                
+                // Abre Modal
+                if(modal) modal.show();
             },
             
             eventClick: function(info) {
-                alert('Paciente: ' + info.event.title);
+                alert('Agendamento: ' + info.event.title);
             }
         });
         calendar.render();
@@ -251,15 +238,15 @@ try {
         .then(response => response.json())
         .then(data => {
             if(data.sucesso) {
-                modal.hide();
+                if(modal) modal.hide();
                 calendar.refetchEvents(); 
             } else {
-                alert('Erro: ' + (data.erro || 'Erro desconhecido'));
+                alert('Erro: ' + (data.erro || 'Desconhecido'));
             }
         })
         .catch(err => {
             console.error(err);
-            alert('Erro de comunicação. Verifique o console (F12) para detalhes.');
+            alert('Erro de comunicação.');
         });
     }
 </script>
