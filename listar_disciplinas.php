@@ -97,7 +97,7 @@ try {
                                         </span>
                                     <?php endif; ?>
                                 </td>
-                                <td class="text-end pe-3">
+                                <td class="text-end pe-3 text-nowrap">
                                     <button onclick="visualizarDisciplina(<?= $disc['id'] ?>)" class="btn btn-sm btn-outline-info me-1" title="Visualizar">
                                         <i class="fa-solid fa-eye"></i>
                                     </button>
