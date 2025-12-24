@@ -1,30 +1,28 @@
 <?php
-require_once 'conexao.php'; // Certifique-se que sua conexão $pdo está aqui
-
+require_once 'conexao.php';
 header('Content-Type: application/json');
 
 try {
-    // Tenta pegar o nome do paciente fazendo JOIN com tabela pacientes
-    // Se a tabela de pacientes tiver outro nome, ajuste aqui
+    // SQL ajustado para suas colunas
     $sql = "
         SELECT 
             m.id, 
-            COALESCE(p.nome, 'Paciente ID: ' || m.paciente_id) as title, 
+            -- Tenta pegar o nome do paciente, se não tiver, mostra 'Paciente X'
+            COALESCE(p.nome, CONCAT('Paciente #', m.paciente_id)) as title, 
             
-            -- Junta DATA e HORA para formar o formato ISO (YYYY-MM-DD HH:MM:SS)
+            -- Junta DATA e HORA para o calendário entender
             CONCAT(m.data_atendimento, ' ', m.hora) as start,
             
-            -- Cria uma hora final falsa (adiciona 1 hora) só pro calendário desenhar o bloco
+            -- Cria uma duração fictícia de 1h
             DATE_ADD(CONCAT(m.data_atendimento, ' ', m.hora), INTERVAL 1 HOUR) as end,
             
             m.obs,
             
-            -- Cores baseadas no status (Ajuste os IDs conforme sua regra de negócio)
+            -- Cores baseadas no status
             CASE m.status_marcacao_id
-                WHEN 1 THEN '#f39c12'  -- Aguardando (Laranja)
-                WHEN 2 THEN '#198754'  -- Atendido/Confirmado (Verde)
-                WHEN 3 THEN '#dc3545'  -- Faltou (Vermelho)
-                ELSE '#0d6efd'         -- Padrão (Azul)
+                WHEN 1 THEN '#f39c12'  -- Laranja
+                WHEN 2 THEN '#198754'  -- Verde
+                ELSE '#0d6efd'         -- Azul
             END as color
 
         FROM marcacoes m
@@ -40,6 +38,6 @@ try {
     echo json_encode($eventos);
 
 } catch (Exception $e) {
-    // Retorna array vazio em caso de erro para não quebrar o JS
     echo json_encode([]);
 }
+?>
