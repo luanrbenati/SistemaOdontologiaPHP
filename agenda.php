@@ -1,4 +1,5 @@
 <?php 
+// Debug para erros de PHP
 ini_set('display_errors', 1);
 error_reporting(E_ALL);
 require_once 'conexao.php'; 
@@ -116,12 +117,17 @@ try {
     var calendar, modal; 
 
     document.addEventListener('DOMContentLoaded', function() {
-        modal = new bootstrap.Modal(document.getElementById('modalAgendamento'));
+        var modalEl = document.getElementById('modalAgendamento');
+        if (typeof bootstrap !== 'undefined') {
+            modal = new bootstrap.Modal(modalEl);
+        } else {
+            console.error("Bootstrap não carregado.");
+        }
+        
         iniciarCalendario();
         $('.select2-modal').select2({ theme: 'bootstrap-5', dropdownParent: $('#modalAgendamento') });
     });
 
-    // Função para carregar alunos ao trocar turma (Com suporte a pré-seleção)
     function carregarAlunos(turmaId, alunoPreSelecionado = null) {
         var sel = $('#select_aluno');
         sel.empty().append('<option>Carregando...</option>').prop('disabled', true);
@@ -133,7 +139,6 @@ try {
                 sel.empty().append('<option value="">Selecione...</option>');
                 data.forEach(a => sel.append(new Option(a.nome, a.id)));
                 sel.prop('disabled', false);
-                // Se estamos editando, seleciona o aluno correto
                 if(alunoPreSelecionado) sel.val(alunoPreSelecionado).trigger('change');
             });
     }
@@ -141,47 +146,47 @@ try {
     function iniciarCalendario() {
         var calendarEl = document.getElementById('calendar');
         calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridMonth', locale: 'pt-br', themeSystem: 'bootstrap5',
+            initialView: 'dayGridMonth',
+            locale: 'pt-br',
+            themeSystem: 'bootstrap5',
+            dayMaxEvents: true, // Adicionei para não estourar a altura se tiver muitos eventos
+            selectable: true,   // <--- ESSA LINHA QUE FALTAVA!
+            
             events: 'api_eventos.php',
 
-            // === 1. CLIQUE NO BRANCO (CRIAR NOVO) ===
+            // === CLIQUE NO BRANCO (CRIAR) ===
             select: function(info) {
                 resetModal("Novo Agendamento");
                 
-                // Preenche Data e Hora padrão
                 let dataIso = info.startStr.split('T')[0];
                 let horaIso = info.startStr.includes('T') ? info.startStr.split('T')[1].substring(0,5) : "08:00";
                 
                 $('#data_atendimento').val(dataIso);
                 $('#input_hora').val(horaIso);
                 
-                modal.show();
+                if(modal) modal.show();
             },
 
-            // === 2. CLIQUE NO EVENTO (EDITAR) ===
+            // === CLIQUE NO EVENTO (EDITAR) ===
             eventClick: function(info) {
                 resetModal("Editar Agendamento");
                 
-                let props = info.event.extendedProps; // Dados extras do backend
+                let props = info.event.extendedProps;
                 
-                // Preenche campos simples
-                $('#agendamento_id').val(info.event.id); // ID IMPORTANTE!
-                $('#data_atendimento').val(props.data_atendimento);
+                $('#agendamento_id').val(info.event.id);
+                $('#data_atendimento').val(props.data_atendimento); // Usa a data original do evento
                 $('#input_hora').val(props.hora);
                 $('#input_obs').val(props.obs);
 
-                // Preenche Select2 (Trigger change é essencial)
                 $('#select_perfil').val(props.perfil_id).trigger('change');
                 $('#select_turma').val(props.turma_id).trigger('change');
                 $('#select_paciente').val(props.paciente_id).trigger('change');
                 $('#select_professor').val(props.professor_id).trigger('change');
 
-                // Carrega alunos daquela turma e seleciona o certo
                 carregarAlunos(props.turma_id, props.aluno_id);
 
-                // Mostra botão de excluir
                 $('#btnExcluir').show();
-                modal.show();
+                if(modal) modal.show();
             }
         });
         calendar.render();
@@ -190,14 +195,15 @@ try {
     function resetModal(titulo) {
         $('#formAgendamento')[0].reset();
         $('#modalTitle').text(titulo);
-        $('#agendamento_id').val(''); // Limpa ID
+        $('#agendamento_id').val(''); // Garante que o ID esteja vazio para criar novo
         $('.select2-modal').val(null).trigger('change');
-        $('#btnExcluir').hide(); // Esconde botão excluir
+        $('#btnExcluir').hide();
+        $('#select_aluno').prop('disabled', true);
     }
 
     function salvarEvento() {
         const dados = {
-            id:               $('#agendamento_id').val(), // Se tiver ID, é Update
+            id:               $('#agendamento_id').val(),
             data_atendimento: $('#data_atendimento').val(),
             hora:             $('#input_hora').val(),
             perfil_id:        $('#select_perfil').val(),
@@ -208,26 +214,11 @@ try {
             obs:              $('#input_obs').val()
         };
 
-        // Validação simples
         if(!dados.data_atendimento || !dados.hora || !dados.paciente_id) {
             alert("Preencha os campos obrigatórios."); return;
         }
 
-        enviarDados(dados, 'editar_agendamento.php');
-    }
-
-    function excluirEvento() {
-        if(!confirm("Tem certeza que deseja excluir este agendamento?")) return;
-        
-        const dados = {
-            id: $('#agendamento_id').val(),
-            acao: 'excluir' // Flag para o PHP saber que é delete
-        };
-        enviarDados(dados, 'editar_agendamento.php');
-    }
-
-    function enviarDados(dados, url) {
-        fetch(url, {
+        fetch('editar_agendamento.php', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify(dados)
@@ -235,7 +226,31 @@ try {
         .then(r => r.json())
         .then(data => {
             if(data.sucesso) {
-                modal.hide();
+                if(modal) modal.hide();
+                calendar.refetchEvents();
+            } else {
+                alert('Erro: ' + data.erro);
+            }
+        });
+    }
+
+    function excluirEvento() {
+        if(!confirm("Tem certeza que deseja excluir este agendamento?")) return;
+        
+        const dados = {
+            id: $('#agendamento_id').val(),
+            acao: 'excluir'
+        };
+
+        fetch('editar_agendamento.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(dados)
+        })
+        .then(r => r.json())
+        .then(data => {
+            if(data.sucesso) {
+                if(modal) modal.hide();
                 calendar.refetchEvents();
             } else {
                 alert('Erro: ' + data.erro);
