@@ -3,33 +3,36 @@ require_once 'conexao.php';
 header('Content-Type: application/json');
 
 try {
-    // SQL ajustado para suas colunas
+    // SQL ajustado para trazer TODOS os IDs necessários para edição
     $sql = "
         SELECT 
             m.id, 
-            -- Tenta pegar o nome do paciente, se não tiver, mostra 'Paciente X'
             COALESCE(p.nome, CONCAT('Paciente #', m.paciente_id)) as title, 
-            
-            -- Junta DATA e HORA para o calendário entender
             CONCAT(m.data_atendimento, ' ', m.hora) as start,
-            
-            -- Cria uma duração fictícia de 1h
-            DATE_ADD(CONCAT(m.data_atendimento, ' ', m.hora), INTERVAL 1 HOUR) as end,
-            
-            m.obs,
+            -- Duração fake de 30min só pro calendário renderizar
+            DATE_ADD(CONCAT(m.data_atendimento, ' ', m.hora), INTERVAL 30 MINUTE) as end,
             
             -- Cores baseadas no status
             CASE m.status_marcacao_id
-                WHEN 1 THEN '#f39c12'  -- Laranja
-                WHEN 2 THEN '#198754'  -- Verde
-                ELSE '#0d6efd'         -- Azul
-            END as color
+                WHEN 1 THEN '#f39c12'  -- Aguardando (Laranja)
+                WHEN 2 THEN '#198754'  -- Atendido (Verde)
+                WHEN 3 THEN '#dc3545'  -- Cancelado (Vermelho)
+                ELSE '#0d6efd'         -- Padrão (Azul)
+            END as color,
+
+            -- DADOS EXTRAS (ExtendedProps) PARA EDIÇÃO
+            m.paciente_id,
+            m.aluno_id,
+            m.professor_id,
+            m.turma_id,
+            m.perfil_id,
+            m.obs,
+            m.hora,
+            m.data_atendimento
 
         FROM marcacoes m
         LEFT JOIN pacientes p ON m.paciente_id = p.id
-        WHERE m.data_atendimento IS NOT NULL 
-          AND m.hora IS NOT NULL 
-          AND m.hora != ''
+        WHERE m.status_marcacao_id != 99 -- Exemplo: não trazer excluídos lógicos se houver
     ";
 
     $stmt = $pdo->query($sql);
