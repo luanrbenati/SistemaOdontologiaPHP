@@ -18,7 +18,7 @@ $pagina = $_GET['page'] ?? 'home';
 function renderizarMenu($pagina_atual) {
     // Agrupamento de páginas para controle de estado (aberto/fechado)
     $paginas_manutencao = ['usuarios', 'grupos', 'criar_usuario', 'editar_usuario'];
-    $paginas_cadastros = ['professores', 'alunos']; 
+    $paginas_cadastros = ['professores', 'alunos', 'disciplinas']; 
     
     $is_manutencao_active = in_array($pagina_atual, $paginas_manutencao);
     $is_cadastros_active = in_array($pagina_atual, $paginas_cadastros);
@@ -51,6 +51,9 @@ function renderizarMenu($pagina_atual) {
                 </a>
                 <a class="nav-link ' . ($pagina_atual == 'alunos' ? 'active' : '') . '" href="?page=alunos">
                     <i class="fa-solid fa-user-graduate me-2"></i> Alunos
+                </a>
+                <a class="nav-link ' . ($pagina_atual == 'disciplinas' ? 'active' : '') . '" href="?page=disciplinas">
+                    <i class="fa-solid fa-book me-2"></i> Disciplinas
                 </a>
             </div>
         </div>
@@ -168,6 +171,11 @@ function renderizarMenu($pagina_atual) {
                     case 'alunos':
                         if (file_exists('listar_alunos.php')) include 'listar_alunos.php';
                         else echo "<div class='alert alert-warning m-3'>Arquivo listar_alunos.php não encontrado.</div>";
+                        break;
+
+                    case 'disciplinas':
+                        if (file_exists('listar_disciplinas.php')) include 'listar_disciplinas.php';
+                        else echo "<div class='alert alert-warning m-3'>Arquivo listar_disciplinas.php não encontrado.</div>";
                         break;
 
                     case 'usuarios':
