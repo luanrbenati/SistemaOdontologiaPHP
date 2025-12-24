@@ -100,7 +100,7 @@ try {
                                         <i class="fa-solid fa-envelope me-1"></i> <?= htmlspecialchars($aluno['email']) ?>
                                     <?php endif; ?>
                                 </td>
-                                <td class="text-end pe-3">
+                                <td class="text-end pe-3 text-nowrap">
                                     <button onclick="visualizarRegistro('aluno', <?= $aluno['id'] ?>)" class="btn btn-sm btn-outline-info me-1" title="Visualizar">
                                         <i class="fa-solid fa-eye"></i>
                                     </button>
