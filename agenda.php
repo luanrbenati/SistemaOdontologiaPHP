@@ -120,8 +120,6 @@ try {
         var modalEl = document.getElementById('modalAgendamento');
         if (typeof bootstrap !== 'undefined') {
             modal = new bootstrap.Modal(modalEl);
-        } else {
-            console.error("Bootstrap não carregado.");
         }
         
         iniciarCalendario();
@@ -149,13 +147,29 @@ try {
             initialView: 'dayGridMonth',
             locale: 'pt-br',
             themeSystem: 'bootstrap5',
-            dayMaxEvents: true, // Adicionei para não estourar a altura se tiver muitos eventos
-            selectable: true,   // <--- ESSA LINHA QUE FALTAVA!
+            dayMaxEvents: true,
+            selectable: true,
+            
+            // --- BLOQUEIO VISUAL DE SELEÇÃO PASSADA ---
+            selectAllow: function(info) {
+                // Retorna true se a data for hoje ou futuro
+                // "start" vem zerado (00:00:00) na visão de mês, então comparamos com ontem para permitir "hoje"
+                var ontem = new Date();
+                ontem.setDate(ontem.getDate() - 1);
+                return info.start >= ontem;
+            },
             
             events: 'api_eventos.php',
 
-            // === CLIQUE NO BRANCO (CRIAR) ===
             select: function(info) {
+                // Verificação Extra de Hora (caso clique na visão de dia/semana)
+                let agora = new Date();
+                if (info.start < agora && info.view.type !== 'dayGridMonth') {
+                    // Se clicou num horário passado na visão semanal, cancela
+                    calendar.unselect();
+                    return;
+                }
+                
                 resetModal("Novo Agendamento");
                 
                 let dataIso = info.startStr.split('T')[0];
@@ -167,14 +181,13 @@ try {
                 if(modal) modal.show();
             },
 
-            // === CLIQUE NO EVENTO (EDITAR) ===
             eventClick: function(info) {
                 resetModal("Editar Agendamento");
                 
                 let props = info.event.extendedProps;
                 
                 $('#agendamento_id').val(info.event.id);
-                $('#data_atendimento').val(props.data_atendimento); // Usa a data original do evento
+                $('#data_atendimento').val(props.data_atendimento);
                 $('#input_hora').val(props.hora);
                 $('#input_obs').val(props.obs);
 
@@ -195,7 +208,7 @@ try {
     function resetModal(titulo) {
         $('#formAgendamento')[0].reset();
         $('#modalTitle').text(titulo);
-        $('#agendamento_id').val(''); // Garante que o ID esteja vazio para criar novo
+        $('#agendamento_id').val(''); 
         $('.select2-modal').val(null).trigger('change');
         $('#btnExcluir').hide();
         $('#select_aluno').prop('disabled', true);
@@ -217,6 +230,18 @@ try {
         if(!dados.data_atendimento || !dados.hora || !dados.paciente_id) {
             alert("Preencha os campos obrigatórios."); return;
         }
+
+        // --- VALIDAÇÃO EXTRA NO JS ANTES DE ENVIAR ---
+        let dataSelecionada = new Date(dados.data_atendimento + 'T' + dados.hora);
+        let agora = new Date();
+        // Subtrai 1 minuto do "agora" para evitar erro de segundos durante o cadastro
+        agora.setMinutes(agora.getMinutes() - 1); 
+
+        if (dataSelecionada < agora) {
+            alert("Erro: Você não pode agendar para uma data ou hora passada.");
+            return;
+        }
+        // ----------------------------------------------
 
         fetch('editar_agendamento.php', {
             method: 'POST',
@@ -257,4 +282,4 @@ try {
             }
         });
     }
-</script> 
+</script>

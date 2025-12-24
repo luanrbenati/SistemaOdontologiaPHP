@@ -3,6 +3,9 @@ session_start();
 require_once 'conexao.php';
 header('Content-Type: application/json');
 
+// Define o fuso horário para garantir que o "AGORA" esteja correto (ajuste se necessário para America/Sao_Paulo)
+date_default_timezone_set('America/Sao_Paulo');
+
 $input = file_get_contents('php://input');
 $dados = json_decode($input, true);
 
@@ -20,9 +23,25 @@ try {
     }
 
     // === 2. ROTINA DE SALVAR (INSERT ou UPDATE) ===
-    
-    // Verifica conflito de horário (Professor não pode estar em 2 lugares)
-    // Se for edição (tem ID), excluímos o próprio registro da checagem
+
+    // --- NOVA TRAVA: BLOQUEAR DATA PASSADA ---
+    // Monta a data/hora que o usuário está tentando salvar
+    $dataHoraAgendamento = $dados['data_atendimento'] . ' ' . $dados['hora'];
+    $dataHoraAtual = date('Y-m-d H:i');
+
+    // Se a data do agendamento for MENOR que agora
+    if ($dataHoraAgendamento < $dataHoraAtual) {
+        // Permitir edição de observação de eventos passados? 
+        // Se quiser ser rígido e bloquear tudo, mantenha assim. 
+        // Se quiser permitir editar eventos antigos (apenas obs), precisaria de mais lógica.
+        // Pelo seu pedido ("bloquear a inclusão"), vou bloquear estritamente se tentar salvar no passado.
+        
+        echo json_encode(['sucesso' => false, 'erro' => 'Não é permitido agendar em datas ou horários passados!']);
+        exit;
+    }
+    // -----------------------------------------
+
+    // Verifica conflito de horário (Professor)
     $sqlCheck = "SELECT id FROM marcacoes 
                  WHERE professor_id = :prof 
                  AND data_atendimento = :data 
@@ -30,7 +49,7 @@ try {
                  AND status_marcacao_id != 3";
     
     if (!empty($dados['id'])) {
-        $sqlCheck .= " AND id != :id_atual"; // Ignora a si mesmo na checagem
+        $sqlCheck .= " AND id != :id_atual"; 
     }
 
     $stmtCheck = $pdo->prepare($sqlCheck);
@@ -44,13 +63,12 @@ try {
     $stmtCheck->execute($paramsCheck);
 
     if ($stmtCheck->rowCount() > 0) {
-        echo json_encode(['sucesso'=>false, 'erro'=>'Conflito de horário para este professor!']);
+        echo json_encode(['sucesso'=>false, 'erro'=>'Conflito: O Professor já possui agendamento neste horário!']);
         exit;
     }
 
-    // Define se é INSERT ou UPDATE
+    // INSERT ou UPDATE
     if (empty($dados['id'])) {
-        // --- INSERIR NOVO ---
         $sql = "INSERT INTO marcacoes (paciente_id, aluno_id, professor_id, turma_id, perfil_id, acl_usuario_id, data_atendimento, hora, obs, data_solicitacao, status_marcacao_id, created) 
                 VALUES (:pac, :alu, :prof, :turm, :perf, :usu, :data, :hora, :obs, NOW(), 1, NOW())";
         $params = [
@@ -59,7 +77,6 @@ try {
             ':data'=>$dados['data_atendimento'], ':hora'=>$dados['hora'], ':obs'=>$dados['obs']
         ];
     } else {
-        // --- ATUALIZAR EXISTENTE ---
         $sql = "UPDATE marcacoes SET 
                     paciente_id=:pac, aluno_id=:alu, professor_id=:prof, turma_id=:turm, 
                     perfil_id=:perf, data_atendimento=:data, hora=:hora, obs=:obs, modified=NOW()
