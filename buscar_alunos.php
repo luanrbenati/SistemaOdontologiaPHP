@@ -1,20 +1,37 @@
 <?php
 require_once 'conexao.php';
 
+// Recebe o ID da turma via GET
 $turma_id = $_GET['turma_id'] ?? null;
+
+// Array para retorno
+$alunos = [];
 
 if ($turma_id) {
     try {
-        // Ajuste 'turma_id' se o nome da coluna na tabela ALUNOS for diferente
-        $stmt = $pdo->prepare("SELECT id, nome FROM alunos WHERE turma_id = ? AND ativo = 1 ORDER BY nome ASC");
+        // === SQL CORRIGIDO ===
+        // Faz a ligação: Tabela Alunos (a) -> Tabela de Ligação (at) -> ID da Turma
+        $sql = "
+            SELECT a.id, a.nome 
+            FROM alunos a
+            INNER JOIN alunos_turmas at ON a.id = at.aluno_id
+            WHERE at.turma_id = ? 
+              AND a.ativo = 1 
+            ORDER BY a.nome ASC
+        ";
+        
+        $stmt = $pdo->prepare($sql);
         $stmt->execute([$turma_id]);
         $alunos = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
-        echo json_encode($alunos);
     } catch (Exception $e) {
-        echo json_encode([]);
+        // Em caso de erro, retorna array vazio
+        // Se quiser debugar, pode descomentar a linha abaixo:
+        // echo json_encode(['erro' => $e->getMessage()]); exit;
     }
-} else {
-    echo json_encode([]);
 }
+
+// Retorna JSON para o JavaScript
+header('Content-Type: application/json');
+echo json_encode($alunos);
 ?>
