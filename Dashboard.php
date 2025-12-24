@@ -18,7 +18,7 @@ $pagina = $_GET['page'] ?? 'home';
 function renderizarMenu($pagina_atual) {
     // Agrupamento de páginas para controle de estado (aberto/fechado)
     $paginas_manutencao = ['usuarios', 'grupos', 'criar_usuario', 'editar_usuario'];
-    $paginas_cadastros = ['professores', 'alunos', 'disciplinas', 'procedimentos']; 
+    $paginas_cadastros = ['professores', 'alunos', 'disciplinas', 'procedimentos', 'perfis', 'turmas']; 
     
     $is_manutencao_active = in_array($pagina_atual, $paginas_manutencao);
     $is_cadastros_active = in_array($pagina_atual, $paginas_cadastros);
@@ -65,6 +65,12 @@ function renderizarMenu($pagina_atual) {
                 </a>
                 <a class="nav-link ' . ($pagina_atual == 'procedimentos' ? 'active' : '') . '" href="?page=procedimentos">
                     <i class="fa-solid fa-tooth me-2"></i> Procedimentos
+                </a>
+                <a class="nav-link ' . ($pagina_atual == 'perfis' ? 'active' : '') . '" href="?page=perfis">
+                    <i class="fa-solid fa-stethoscope me-2"></i> Perfis
+                </a>
+                <a class="nav-link ' . ($pagina_atual == 'turmas' ? 'active' : '') . '" href="?page=turmas">
+                    <i class="fa-solid fa-users me-2"></i> Turmas
                 </a>
             </div>
         </div>
@@ -198,6 +204,16 @@ function renderizarMenu($pagina_atual) {
                     case 'procedimentos':
                         if (file_exists('listar_procedimentos.php')) include 'listar_procedimentos.php';
                         else echo "<div class='alert alert-warning m-3'>Arquivo listar_procedimentos.php não encontrado.</div>";
+                        break;
+
+                    case 'perfis':
+                        if (file_exists('listar_perfis.php')) include 'listar_perfis.php';
+                        else echo "<div class='alert alert-warning m-3'>Arquivo listar_perfis.php não encontrado.</div>";
+                        break;
+
+                    case 'turmas':
+                        if (file_exists('listar_turmas.php')) include 'listar_turmas.php';
+                        else echo "<div class='alert alert-warning m-3'>Arquivo listar_turmas.php não encontrado.</div>";
                         break;
 
                     case 'usuarios':
