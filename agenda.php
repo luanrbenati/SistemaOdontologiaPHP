@@ -1,23 +1,44 @@
 <?php 
+// 1. ATIVAR VISUALIZAÇÃO DE ERROS (Isso vai nos mostrar o problema)
+ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+error_reporting(E_ALL);
+
+// Verifica se o arquivo de conexão existe antes de incluir
+if (!file_exists('conexao.php')) {
+    die("<div class='alert alert-danger'>Erro Fatal: O arquivo <strong>conexao.php</strong> não foi encontrado na pasta.</div>");
+}
 require_once 'conexao.php'; 
 
-// === BUSCAR DADOS INICIAIS ===
+// Variáveis iniciais
+$pacientes = [];
+$professores = [];
+$turmas = [];
+
 try {
-    // 1. Pacientes
+    // 1. Buscar Pacientes
     $stmt = $pdo->query("SELECT id, nome FROM pacientes ORDER BY nome ASC");
     $pacientes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // 2. Professores
+    // 2. Buscar Professores
     $stmt = $pdo->query("SELECT id, nome FROM professores WHERE ativo = 1 ORDER BY nome ASC");
     $professores = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-    // 3. Turmas (NOVO - Para o filtro)
-    // Assumindo que existe uma tabela 'turmas' ou similar. Se não tiver, me avise.
+    // 3. Buscar Turmas
+    // Sua tabela está correta (tem id e nome), então isso DEVE funcionar.
     $stmt = $pdo->query("SELECT id, nome FROM turmas ORDER BY nome DESC");
     $turmas = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+} catch (PDOException $e) {
+    // Se der erro no SQL, mostra aqui
+    echo "<div class='alert alert-danger m-3'>
+            <strong>Erro no Banco de Dados:</strong><br> " . $e->getMessage() . "
+          </div>";
 } catch (Exception $e) {
-    $pacientes = []; $professores = []; $turmas = [];
+    // Outros erros
+    echo "<div class='alert alert-danger m-3'>
+            <strong>Erro Geral:</strong><br> " . $e->getMessage() . "
+          </div>";
 }
 ?>
 
@@ -31,7 +52,7 @@ try {
 <style>
     .fc-event-main { cursor: pointer; color: #fff; font-size: 0.85rem; }
     .fc-toolbar-title { font-size: 1.25rem !important; }
-    .select2-container { z-index: 9999; } /* Fica acima do modal */
+    .select2-container { z-index: 9999; }
 </style>
 
 <div class="container-fluid p-4">
@@ -69,9 +90,13 @@ try {
                         <label class="form-label small fw-bold">Turma</label>
                         <select class="form-select select2-modal" name="turma_id" id="select_turma" style="width: 100%;" onchange="carregarAlunos(this.value)">
                             <option value="">Selecione a turma...</option>
-                            <?php foreach($turmas as $t): ?>
-                                <option value="<?= $t['id'] ?>"><?= htmlspecialchars($t['nome']) ?></option>
-                            <?php endforeach; ?>
+                            <?php if (!empty($turmas)): ?>
+                                <?php foreach($turmas as $t): ?>
+                                    <option value="<?= $t['id'] ?>"><?= htmlspecialchars($t['nome']) ?></option>
+                                <?php endforeach; ?>
+                            <?php else: ?>
+                                <option value="" disabled>Nenhuma turma encontrada</option>
+                            <?php endif; ?>
                         </select>
                     </div>
 
@@ -137,23 +162,31 @@ try {
         });
     }
 
-    // === FUNÇÃO MÁGICA PARA CARREGAR ALUNOS ===
     function carregarAlunos(turmaId) {
         var alunoSelect = $('#select_aluno');
         alunoSelect.empty().append('<option value="">Carregando...</option>').prop('disabled', true);
 
         if(turmaId) {
+            // Busca os alunos via AJAX
             fetch('buscar_alunos.php?turma_id=' + turmaId)
-                .then(response => response.json())
+                .then(response => {
+                    if (!response.ok) { throw new Error('Erro na rede'); }
+                    return response.json();
+                })
                 .then(data => {
                     alunoSelect.empty().append('<option value="">Selecione o aluno...</option>');
-                    data.forEach(aluno => {
-                        alunoSelect.append(new Option(aluno.nome, aluno.id));
-                    });
+                    if (data.length > 0) {
+                        data.forEach(aluno => {
+                            alunoSelect.append(new Option(aluno.nome, aluno.id));
+                        });
+                    } else {
+                        alunoSelect.append('<option value="">Nenhum aluno nesta turma</option>');
+                    }
                     alunoSelect.prop('disabled', false);
                 })
                 .catch(err => {
-                    alunoSelect.empty().append('<option value="">Erro ao carregar</option>');
+                    console.error("Erro:", err);
+                    alunoSelect.empty().append('<option value="">Erro ao buscar alunos</option>');
                 });
         } else {
             alunoSelect.empty().append('<option value="">Selecione primeiro a turma...</option>');
@@ -179,7 +212,6 @@ try {
             events: 'api_eventos.php',
 
             select: function(info) {
-                // Reseta tudo ao abrir
                 $('#formAgendamento')[0].reset();
                 $('.select2-modal').val(null).trigger('change');
                 $('#select_aluno').prop('disabled', true).html('<option>Selecione a turma...</option>');
@@ -203,7 +235,7 @@ try {
             paciente_id: $('#select_paciente').val(),
             aluno_id: $('#select_aluno').val(),
             professor_id: $('#select_professor').val(),
-            turma_id: $('#select_turma').val(), // Pega a turma também
+            turma_id: $('#select_turma').val(),
             obs: $('textarea[name="obs"]').val()
         };
 
@@ -222,8 +254,12 @@ try {
                 modal.hide();
                 calendar.refetchEvents(); 
             } else {
-                alert('Erro: ' + data.erro);
+                alert('Erro: ' + (data.erro || 'Erro desconhecido'));
             }
+        })
+        .catch(err => {
+            console.error(err);
+            alert('Erro de comunicação. Verifique o console (F12) para detalhes.');
         });
     }
 </script>
