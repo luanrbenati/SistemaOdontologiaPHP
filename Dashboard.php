@@ -258,7 +258,7 @@ function renderizarMenu($pagina_atual) {
                         ?>
                         <div class="d-flex flex-column justify-content-center align-items-center h-100 text-muted p-5 text-center">
                             <i class="fa-solid fa-tooth fa-4x mb-3 text-secondary" style="opacity: 0.1;"></i>
-                            <h4 style="opacity: 0.6;">Bem-vindo ao D-SIGO</h4>
+                            <h4 style="opacity: 0.6;">Bem-vindo</h4>
                             <p class="small" style="opacity: 0.6;">Selecione uma opção no menu para começar.</p>
                         </div>
                         <?php
