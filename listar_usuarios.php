@@ -4,8 +4,6 @@ try {
     if (!isset($pdo)) throw new Exception("Erro de conexão: Variável \$pdo não definida.");
 
     // === SQL ATUALIZADO ===
-    // Adicionei o LEFT JOIN groups g ON u.group_id = g.id
-    // E busquei g.name como 'nome_grupo'
     $sql = "
         SELECT 
             u.id, 
@@ -24,7 +22,7 @@ try {
                 ) ORDER BY h.dia_semana ASC SEPARATOR '<br>'
             ) as resumo_horarios
         FROM users u
-        LEFT JOIN groups g ON u.group_id = g.id  -- Ligação com a tabela da imagem
+        LEFT JOIN groups g ON u.group_id = g.id
         LEFT JOIN horarios_acesso h ON u.id = h.user_id
         GROUP BY u.id
         ORDER BY u.name ASC
@@ -101,8 +99,12 @@ try {
                                 <td class="horario-cell">
                                     <?= $user['resumo_horarios'] ?: "<span class='text-muted fst-italic'>Sem restrições</span>" ?>
                                 </td>
-                                <td class="text-end pe-3">
-                                    <button onclick="abrirModal('form_usuario.php?id=<?= $user['id'] ?>')" class="btn btn-sm btn-outline-primary">
+                                
+                                <td class="text-end pe-3 text-nowrap">
+                                    <button onclick="visualizarRegistro('usuario', <?= $user['id'] ?>)" class="btn btn-sm btn-outline-info me-1" title="Visualizar">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </button>
+                                    <button onclick="abrirModal('form_usuario.php?id=<?= $user['id'] ?>')" class="btn btn-sm btn-outline-primary" title="Editar">
                                         <i class="fa-solid fa-pen"></i>
                                     </button>
                                 </td>
@@ -114,6 +116,26 @@ try {
             </div>
         </div>
     </div>
+</div>
+
+<div class="modal fade" id="modalVisualizar" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-dialog-centered"> 
+    <div class="modal-content border-0 shadow">
+      <div class="modal-header bg-light py-2">
+        <h5 class="modal-title fs-6 fw-bold text-secondary"><i class="fa-solid fa-info-circle me-2"></i>Detalhes do Registro</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body p-4">
+        <div id="conteudoVisualizar">
+          <div class="text-center py-3">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Carregando...</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="modal fade" id="modalEditor" tabindex="-1" aria-hidden="true" data-bs-backdrop="static">
@@ -137,6 +159,23 @@ try {
         iframe.src = url;
         var modal = new bootstrap.Modal(modalEl);
         modal.show();
+    }
+
+    // Função Nova Adicionada
+    function visualizarRegistro(tipo, id) {
+        var modal = new bootstrap.Modal(document.getElementById('modalVisualizar'));
+        modal.show();
+        
+        // Certifique-se que o visualizar.php trata o caso 'usuario'
+        fetch('visualizar.php?tipo=' + tipo + '&id=' + id)
+            .then(response => response.text())
+            .then(data => {
+                document.getElementById('conteudoVisualizar').innerHTML = data;
+            })
+            .catch(error => {
+                document.getElementById('conteudoVisualizar').innerHTML = 
+                    '<div class="alert alert-danger">Erro ao carregar dados.</div>';
+            });
     }
 
     function fecharModal() {
