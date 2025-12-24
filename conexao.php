@@ -1,6 +1,6 @@
 <?php
 // conexao.php
-$host = 'localhost';
+$host = '';
 $db   = 'srv_odonto'; 
 $user = 'Odonto';              
 $pass = 'Odonto@123';                  
