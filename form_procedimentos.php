@@ -11,7 +11,7 @@ $procedimento = [
     'nome' => '', 
     'codigo' => '', 
     'codigo_sus' => '',
-    'qtd_necessaria' => 1
+    'qtd_necessario' => 1
 ];
 
 // Se for edição, busca os dados atuais
@@ -29,19 +29,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $nome           = $_POST['nome'];
     $codigo         = $_POST['codigo'];
     $codigo_sus     = $_POST['codigo_sus'];
-    $qtd_necessaria = $_POST['qtd_necessaria'];
+    $qtd_necessario = $_POST['qtd_necessario'];
 
     try {
         if ($id) {
             // SQL de Atualização
-            $sql = "UPDATE procedimentos SET nome=?, codigo=?, codigo_sus=?, qtd_necessaria=?, modified=NOW() WHERE id=?";
+            $sql = "UPDATE procedimentos SET nome=?, codigo=?, codigo_sus=?, qtd_necessario=?, modified=NOW() WHERE id=?";
             $stmt = $pdo->prepare($sql);
-            $stmt->execute([$nome, $codigo, $codigo_sus, $qtd_necessaria, $id]);
+            $stmt->execute([$nome, $codigo, $codigo_sus, $qtd_necessario, $id]);
         } else {
             // SQL de Inserção
-            $sql = "INSERT INTO procedimentos (nome, codigo, codigo_sus, qtd_necessaria, created) VALUES (?, ?, ?, ?, NOW())";
+            $sql = "INSERT INTO procedimentos (nome, codigo, codigo_sus, qtd_necessario, created) VALUES (?, ?, ?, ?, NOW())";
             $stmt = $pdo->prepare($sql);
-            $stmt->execute([$nome, $codigo, $codigo_sus, $qtd_necessaria]);
+            $stmt->execute([$nome, $codigo, $codigo_sus, $qtd_necessario]);
         }
         
         header("Location: listar_procedimentos.php?status=sucesso");
@@ -100,7 +100,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                     <div class="col-md-4">
                         <label class="form-label"><i class="fa-solid fa-sort-numeric-up me-1"></i> Quantidade Necessária</label>
-                        <input type="number" name="qtd_necessaria" class="form-control" value="<?= htmlspecialchars($procedimento['qtd_necessaria']) ?>" required min="1" placeholder="1">
+                        <input type="number" name="qtd_necessario" class="form-control" value="<?= htmlspecialchars($procedimento['qtd_necessario']) ?>" required min="1" placeholder="1">
                         <small class="text-muted">
                             <i class="fa-solid fa-info-circle me-1"></i>
                             Número de vezes que o procedimento deve ser realizado

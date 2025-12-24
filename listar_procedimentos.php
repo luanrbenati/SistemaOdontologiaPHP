@@ -10,7 +10,7 @@ try {
             nome, 
             codigo, 
             codigo_sus,
-            qtd_necessaria,
+            qtd_necessario,
             DATE_FORMAT(created, '%d/%m/%Y %H:%i') as criado_em,
             DATE_FORMAT(modified, '%d/%m/%Y %H:%i') as modificado_em
         FROM procedimentos
@@ -84,7 +84,7 @@ try {
                                 </td>
                                 <td class="text-center">
                                     <span class="badge bg-info text-dark">
-                                        <?= $proc['qtd_necessaria'] ?>
+                                        <?= $proc['qtd_necessario'] ?>
                                     </span>
                                 </td>
                                 <td class="text-end pe-3">
