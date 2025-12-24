@@ -18,7 +18,7 @@ $pagina = $_GET['page'] ?? 'home';
 function renderizarMenu($pagina_atual) {
     // Agrupamento de páginas para controle de estado (aberto/fechado)
     $paginas_manutencao = ['usuarios', 'grupos', 'criar_usuario', 'editar_usuario'];
-    $paginas_cadastros = ['professores', 'alunos', 'disciplinas']; 
+    $paginas_cadastros = ['professores', 'alunos', 'disciplinas', 'procedimentos']; 
     
     $is_manutencao_active = in_array($pagina_atual, $paginas_manutencao);
     $is_cadastros_active = in_array($pagina_atual, $paginas_cadastros);
@@ -62,6 +62,9 @@ function renderizarMenu($pagina_atual) {
                 </a>
                 <a class="nav-link ' . ($pagina_atual == 'disciplinas' ? 'active' : '') . '" href="?page=disciplinas">
                     <i class="fa-solid fa-book me-2"></i> Disciplinas
+                </a>
+                <a class="nav-link ' . ($pagina_atual == 'procedimentos' ? 'active' : '') . '" href="?page=procedimentos">
+                    <i class="fa-solid fa-tooth me-2"></i> Procedimentos
                 </a>
             </div>
         </div>
@@ -190,6 +193,11 @@ function renderizarMenu($pagina_atual) {
                     case 'disciplinas':
                         if (file_exists('listar_disciplinas.php')) include 'listar_disciplinas.php';
                         else echo "<div class='alert alert-warning m-3'>Arquivo listar_disciplinas.php não encontrado.</div>";
+                        break;
+
+                    case 'procedimentos':
+                        if (file_exists('listar_procedimentos.php')) include 'listar_procedimentos.php';
+                        else echo "<div class='alert alert-warning m-3'>Arquivo listar_procedimentos.php não encontrado.</div>";
                         break;
 
                     case 'usuarios':
