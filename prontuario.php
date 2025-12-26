@@ -1,27 +1,27 @@
 <?php
-global $pdo;
+session_start(); // OBRIGATÓRIO: Deve ser a primeira linha do PHP
 
-// No início do arquivo
-session_start();
+// Inclui a conexão (removemos o bloco antigo if !isset($pdo))
+require_once 'conexao.php'; 
+
+// === GERAÇÃO DO TOKEN DE SEGURANÇA (CSRF) ===
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
-
-// No formulário HTML
-<input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
-
-// Na verificação do POST
-if ($_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-    die("Erro de validação de segurança!");
-}
-
-require_once 'conexao.php';
 
 $id_paciente = $_GET['id'] ?? null;
 $mensagem = "";
 
 // === 2. LÓGICA DE PROCESSAMENTO (POST) ===
-if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['acao'])) {
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    
+    // === VALIDAÇÃO DE SEGURANÇA (CSRF) ===
+    // Verifica se o token veio e se é igual ao da sessão
+    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        die("Erro de segurança: Token inválido! Atualize a página e tente novamente.");
+    }
+
+    if (isset($_POST['acao'])) {
     
     // A) UPLOAD DE FOTO (COM CORREÇÃO DE ROTAÇÃO E COMPRESSÃO)
     if ($_POST['acao'] == 'upload_foto' && isset($_FILES['arquivo_foto'])) {
