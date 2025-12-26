@@ -1,27 +1,22 @@
 <?php
-session_start(); // OBRIGATÓRIO: Deve ser a primeira linha do PHP
+global $pdo;
 
-// Inclui a conexão (removemos o bloco antigo if !isset($pdo))
-require_once 'conexao.php'; 
-
-// === GERAÇÃO DO TOKEN DE SEGURANÇA (CSRF) ===
-if (empty($_SESSION['csrf_token'])) {
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+// === 1. CONEXÃO COM BANCO ===
+if (!isset($pdo)) {
+    $host = 'localhost'; $db = 'srv_odonto'; $user = 'root'; $pass = 'qwe123!@#';
+    try {
+        $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8mb4", $user, $pass, [
+            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, 
+            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
+        ]);
+    } catch (\PDOException $e) { die("Erro de Conexão: " . $e->getMessage()); }
 }
 
 $id_paciente = $_GET['id'] ?? null;
 $mensagem = "";
 
 // === 2. LÓGICA DE PROCESSAMENTO (POST) ===
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    
-    // === VALIDAÇÃO DE SEGURANÇA (CSRF) ===
-    // Verifica se o token veio e se é igual ao da sessão
-    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-        die("Erro de segurança: Token inválido! Atualize a página e tente novamente.");
-    }
-
-    if (isset($_POST['acao'])) {
+if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['acao'])) {
     
     // A) UPLOAD DE FOTO (COM CORREÇÃO DE ROTAÇÃO E COMPRESSÃO)
     if ($_POST['acao'] == 'upload_foto' && isset($_FILES['arquivo_foto'])) {
