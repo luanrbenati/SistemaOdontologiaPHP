@@ -148,12 +148,13 @@ $config = [
         'campos' => [
             ['label' => 'ID', 'campo' => 'id', 'icone' => 'fa-hashtag', 'tipo' => 'code'],
             ['label' => 'Nome do Grupo', 'campo' => 'name', 'icone' => 'fa-shield-halved', 'tipo' => 'text', 'negrito' => true],
+            ['label' => 'Descrição', 'campo' => 'Alias', 'icone' => 'fa-align-left', 'tipo' => 'text'],
             ['label' => 'Data de Criação', 'campo' => 'created', 'icone' => 'fa-calendar-plus', 'tipo' => 'data'],
             ['label' => 'Última Modificação', 'campo' => 'modified', 'icone' => 'fa-calendar-check', 'tipo' => 'data']
         ],
         'sql' => "
             SELECT 
-                id, name, description,
+                id, name, Alias,
                 DATE_FORMAT(created, '%d/%m/%Y às %H:%i') as created,
                 DATE_FORMAT(modified, '%d/%m/%Y às %H:%i') as modified
             FROM groups WHERE id = ?
