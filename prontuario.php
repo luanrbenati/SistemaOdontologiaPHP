@@ -1,16 +1,21 @@
 <?php
 global $pdo;
 
-// === 1. CONEXÃO COM BANCO ===
-if (!isset($pdo)) {
-    $host = 'localhost'; $db = 'srv_odonto'; $user = 'root'; $pass = 'qwe123!@#';
-    try {
-        $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8mb4", $user, $pass, [
-            PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION, 
-            PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC
-        ]);
-    } catch (\PDOException $e) { die("Erro de Conexão: " . $e->getMessage()); }
+// No início do arquivo
+session_start();
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
+
+// No formulário HTML
+<input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+
+// Na verificação do POST
+if ($_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+    die("Erro de validação de segurança!");
+}
+
+require_once 'conexao.php';
 
 $id_paciente = $_GET['id'] ?? null;
 $mensagem = "";
