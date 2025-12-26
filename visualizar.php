@@ -121,24 +121,37 @@ $config = [
         "
     ],
 
-    'turma' => [
+  'turma' => [
         'tabela' => 'turmas',
         'titulo' => 'Turma',
         'campos' => [
             ['label' => 'ID', 'campo' => 'id', 'icone' => 'fa-hashtag', 'tipo' => 'code'],
-            ['label' => 'Nome da Turma', 'campo' => 'nome', 'icone' => 'fa-users-rectangle', 'tipo' => 'text', 'negrito' => true],
-            ['label' => 'Semestre', 'campo' => 'semestre', 'icone' => 'fa-calendar', 'tipo' => 'badge', 'sufixo' => 'º'],
-            ['label' => 'Ano', 'campo' => 'ano', 'icone' => 'fa-calendar-days', 'tipo' => 'text'],
+            ['label' => 'Nome da Turma', 'campo' => 'nome', 'icone' => 'fa-users', 'tipo' => 'text', 'negrito' => true],
+            ['label' => 'Ano/Semestre', 'campo' => 'periodo_completo', 'icone' => 'fa-calendar', 'tipo' => 'badge'],
             ['label' => 'Status', 'campo' => 'ativo', 'icone' => 'fa-circle-check', 'tipo' => 'status'],
+            ['label' => 'Disciplina', 'campo' => 'disciplina_nome', 'icone' => 'fa-book', 'tipo' => 'text', 'campo_extra' => 'disciplina_periodo_texto', 'label_extra' => 'Período'],
+            ['label' => 'Monitor (Aluno)', 'campo' => 'aluno_nome', 'icone' => 'fa-user-graduate', 'tipo' => 'text'],
             ['label' => 'Data de Criação', 'campo' => 'created', 'icone' => 'fa-calendar-plus', 'tipo' => 'data'],
             ['label' => 'Última Modificação', 'campo' => 'modified', 'icone' => 'fa-calendar-check', 'tipo' => 'data']
         ],
         'sql' => "
             SELECT 
-                id, nome, semestre, ano, ativo,
-                DATE_FORMAT(created, '%d/%m/%Y às %H:%i') as created,
-                DATE_FORMAT(modified, '%d/%m/%Y às %H:%i') as modified
-            FROM turmas WHERE id = ?
+                t.id,
+                t.nome,
+                t.ano,
+                t.semestre,
+                t.ativo,
+                CONCAT(t.ano, '/', t.semestre, 'º Semestre') as periodo_completo,
+                d.nome as disciplina_nome,
+                d.periodo as disciplina_periodo,
+                CONCAT(d.periodo, 'º Período') as disciplina_periodo_texto,
+                a.nome as aluno_nome,
+                DATE_FORMAT(t.created, '%d/%m/%Y às %H:%i') as created,
+                DATE_FORMAT(t.modified, '%d/%m/%Y às %H:%i') as modified
+            FROM turmas t
+            LEFT JOIN disciplinas d ON t.disciplina_id = d.id
+            LEFT JOIN alunos a ON t.aluno_id = a.id
+            WHERE t.id = ?
         "
     ],
 
