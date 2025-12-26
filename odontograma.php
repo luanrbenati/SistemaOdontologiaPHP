@@ -40,7 +40,7 @@ if (!empty($id_paciente)) {
 
 // === CONFIGURAÇÕES VISUAIS ===
 $width = 800;
-$height = 600;
+$height = 750;
 $centerX = $width / 2; 
 $centerY = $height / 2;
 $radiusExt = 230; // Ajustado levemente
@@ -119,7 +119,7 @@ function getToothSVG($dente, $dados_odonto) {
 <style>
     /* ===== LAYOUT GERAL ===== */
     .odonto-wrapper-reset { width: 100%; display: block; }
-    .odonto-container { display: flex; height: 600px; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); position: relative; }
+    .odonto-container { display: flex; height: 750px; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); position: relative; }
     
     /* ===== ÁREA ESQUERDA (CANVAS) ===== */
     .canvas-panel-odonto { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; background-color: #fff; }
