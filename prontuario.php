@@ -545,3 +545,109 @@ if (!empty($id_paciente)) {
                                                 </tr>
                                             <?php endforeach; ?>
                                         </tbody>
+                                        </table>
+                                </div>
+                            <?php endif; ?> </div>
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <div class="card card-custom">
+                        <div class="card-header-custom">
+                            <i class="fa-solid fa-coins me-2 text-secondary"></i> Resumo Financeiro
+                        </div>
+                        <div class="card-body">
+                            <ul class="list-group list-group-flush small">
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    Tratamentos em Aberto
+                                    <span class="badge bg-warning text-dark">R$ <?php echo number_format($resumo_financeiro['total_aberto'], 2, ',', '.'); ?></span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                                    Total Pago
+                                    <span class="badge bg-success">R$ <?php echo number_format($resumo_financeiro['total_pago'], 2, ',', '.'); ?></span>
+                                </li>
+                                <li class="list-group-item d-flex justify-content-between align-items-center px-0 fw-bold">
+                                    Total Geral
+                                    <span>R$ <?php echo number_format($resumo_financeiro['total_geral'], 2, ',', '.'); ?></span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="tab-pane fade" id="tab-anotacoes">
+            <div class="card card-custom">
+                <div class="card-header-custom">
+                    <i class="fa-solid fa-notes-medical me-2"></i> Histórico e Anotações
+                </div>
+                <div class="card-body">
+                    <form method="post" class="mb-4">
+                        <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
+                        <input type="hidden" name="acao" value="nova_anotacao">
+                        <input type="hidden" name="id_hidden" value="<?php echo $id_paciente; ?>">
+                        
+                        <div class="row g-2">
+                            <div class="col-md-2">
+                                <input type="number" name="dente" class="form-control form-control-sm" placeholder="Dente">
+                            </div>
+                            <div class="col-md-8">
+                                <input type="text" name="anotacao" class="form-control form-control-sm" placeholder="Escreva a anotação aqui..." required>
+                            </div>
+                            <div class="col-md-2">
+                                <button type="submit" class="btn btn-primary btn-sm w-100">Adicionar</button>
+                            </div>
+                        </div>
+                    </form>
+                    
+                    <div class="text-muted small text-center p-3">
+                        Histórico de anotações será listado aqui.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div> </div> <script>
+    function verificarPediatria() {
+        var combo = document.getElementById('comboPediatria');
+        var campoResp = document.getElementById('campoResponsavel');
+        
+        if (combo && campoResp) {
+            if (combo.value == '1') {
+                campoResp.removeAttribute('disabled');
+                campoResp.setAttribute('required', 'required');
+            } else {
+                campoResp.setAttribute('disabled', 'disabled');
+                campoResp.removeAttribute('required');
+                campoResp.value = '';
+            }
+        }
+    }
+
+    function gerenciarFoto(temFoto) {
+        // Lógica simples para upload de foto via JS se necessário, 
+        // ou você pode criar um modal Bootstrap com id "modalFoto"
+        alert("Funcionalidade de foto: Use o formulário ou implemente um modal aqui.");
+    }
+
+    function editarPlano(id) {
+        // Lógica para abrir modal de edição
+        console.log("Editar plano: " + id);
+    }
+
+    // Inicializa scripts ao carregar
+    document.addEventListener('DOMContentLoaded', function() {
+        verificarPediatria();
+        
+        // Ativa as tabs do Bootstrap (caso não esteja usando o data-bs-toggle automático corretamente)
+        var triggerTabList = [].slice.call(document.querySelectorAll('#prontuarioTabs button'))
+        triggerTabList.forEach(function (triggerEl) {
+            var tabTrigger = new bootstrap.Tab(triggerEl)
+            triggerEl.addEventListener('click', function (event) {
+                event.preventDefault()
+                tabTrigger.show()
+            })
+        })
+    });
+</script>
