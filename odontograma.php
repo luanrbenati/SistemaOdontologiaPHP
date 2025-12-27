@@ -1,6 +1,6 @@
 <?php
 // ==================================================================
-// ODONTOGRAMA - VERSÃO OTIMIZADA COM BARRA DE FERRAMENTAS
+// ODONTOGRAMA - VERSÃO RESPONSIVA E CORRIGIDA (FINAL)
 // ==================================================================
 
 global $pdo, $id_paciente;
@@ -40,14 +40,14 @@ if (!empty($id_paciente)) {
 
 // === CONFIGURAÇÕES VISUAIS ===
 $width = 800;
-$height = 750;
+$height = 750; // AUMENTADO PARA EVITAR CORTE
 $centerX = $width / 2; 
 $centerY = $height / 2;
-$radiusExt = 230; // Ajustado levemente
+$radiusExt = 230; 
 $radiusInt = 165;
 $iconSize = 34;
 
-// === FUNÇÕES AUXILIARES DE POSICIONAMENTO ===
+// === FUNÇÕES AUXILIARES ===
 function getPos($cx, $cy, $radius, $angleDeg) {
     global $iconSize;
     $rad = deg2rad($angleDeg - 90); 
@@ -67,7 +67,6 @@ function getLblPos($cx, $cy, $radius, $angleDeg) {
 function getToothSVG($dente, $dados_odonto) {
     global $iconSize;
     
-    // Definição dos caminhos SVG
     $paths = [
         'vestibular' => 'M 14,14 L 6,6 A 20,20 0 0 1 34,6 L 26,14 A 8.5,8.5 0 0 0 14,14 Z',
         'distal'     => 'M 26,14 L 34,6 A 20,20 0 0 1 34,34 L 26,26 A 8.5,8.5 0 0 0 26,14 Z',
@@ -77,14 +76,14 @@ function getToothSVG($dente, $dados_odonto) {
 
     $status_colors = [
         0 => ['fill' => 'white',   'stroke' => '#bbb'],
-        1 => ['fill' => '#fbbf24', 'stroke' => '#d97706'], // Amarelo (A Fazer)
-        2 => ['fill' => '#10b981', 'stroke' => '#059669'], // Verde (Feito)
-        3 => ['fill' => '#ef4444', 'stroke' => '#b91c1c']  // Vermelho (Extraído)
+        1 => ['fill' => '#fbbf24', 'stroke' => '#d97706'],
+        2 => ['fill' => '#10b981', 'stroke' => '#059669'],
+        3 => ['fill' => '#ef4444', 'stroke' => '#b91c1c']
     ];
 
     $svg = '<svg width="'.$iconSize.'" height="'.$iconSize.'" viewBox="0 0 40 40" class="tooth-svg">';
     
-    // Renderiza faces externas
+    // Faces externas
     foreach ($paths as $face => $path) {
         $id = "face_{$dente}_{$face}";
         $key = "{$dente}_{$face}";
@@ -99,7 +98,7 @@ function getToothSVG($dente, $dados_odonto) {
         );
     }
     
-    // Renderiza face central (Oclusal)
+    // Oclusal (Centro)
     $idCentro = "face_{$dente}_oclusal";
     $key = "{$dente}_oclusal";
     $status = $dados_odonto[$key] ?? 0;
@@ -119,37 +118,47 @@ function getToothSVG($dente, $dados_odonto) {
 <style>
     /* ===== LAYOUT GERAL ===== */
     .odonto-wrapper-reset { width: 100%; display: block; }
-    .odonto-container { display: flex; height: 750px; background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); position: relative; }
+    
+    /* Altura ajustada para 750px para não cortar dentes inferiores */
+    .odonto-container { 
+        display: flex; 
+        height: 750px; 
+        background: white; 
+        border-radius: 8px; 
+        overflow: hidden; 
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1); 
+        position: relative; 
+    }
     
     /* ===== ÁREA ESQUERDA (CANVAS) ===== */
     .canvas-panel-odonto { flex: 1; display: flex; flex-direction: column; align-items: center; position: relative; background-color: #fff; }
     
     /* ===== BARRA DE FERRAMENTAS ===== */
-    .toolbar-odonto { display: flex; gap: 8px; padding: 10px 15px; background: #f8f9fa; border-radius: 50px; border: 1px solid #e9ecef; margin-top: 15px; z-index: 100; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+    .toolbar-odonto { 
+        display: flex; gap: 8px; padding: 10px 15px; background: #f8f9fa; 
+        border-radius: 50px; border: 1px solid #e9ecef; margin-top: 15px; 
+        z-index: 100; box-shadow: 0 4px 6px rgba(0,0,0,0.05); 
+    }
     
     .tool-btn { 
-        padding: 6px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; cursor: pointer; 
-        transition: all 0.2s; border: 1px solid transparent; display: flex; align-items: center; gap: 6px; 
-        opacity: 0.6; user-select: none;
+        padding: 6px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 600; 
+        cursor: pointer; transition: all 0.2s; border: 1px solid transparent; 
+        display: flex; align-items: center; gap: 6px; opacity: 0.6; user-select: none;
     }
     .tool-btn:hover { opacity: 0.9; transform: translateY(-1px); }
     .tool-btn.active { opacity: 1; transform: scale(1.05); box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
     
-    /* Cores dos botões */
     .btn-eraser { background: #f1f3f5; color: #495057; border-color: #ced4da; }
     .btn-eraser.active { background: #e9ecef; border-color: #adb5bd; color: black; }
-    
     .btn-todo { background: #fff3cd; color: #856404; border-color: #ffeeba; }
     .btn-todo.active { background: #ffecb5; border-color: #fbbf24; }
-
     .btn-done { background: #d1e7dd; color: #0f5132; border-color: #badbcc; }
     .btn-done.active { background: #c3e6cb; border-color: #10b981; }
-
     .btn-extra { background: #f8d7da; color: #842029; border-color: #f5c2c7; }
     .btn-extra.active { background: #f5c6cb; border-color: #ef4444; }
 
     /* ===== CANVAS DESENHO ===== */
-    .odontograma-visual { position: relative; width: <?php echo $width; ?>px; height: <?php echo $height; ?>px; margin-top: -20px; }
+    .odontograma-visual { position: relative; width: <?php echo $width; ?>px; height: <?php echo $height; ?>px; margin-top: -20px; transition: transform 0.2s ease; }
     
     .tooth-container { position: absolute; display: flex; justify-content: center; align-items: center; z-index: 20; }
     .tooth-svg { transition: transform 0.2s; filter: drop-shadow(1px 2px 2px rgba(0,0,0,0.1)); }
@@ -157,13 +166,10 @@ function getToothSVG($dente, $dados_odonto) {
     .face-part { transition: fill 0.2s, stroke 0.2s; }
     .face-part:hover { opacity: 0.8; }
     
-    /* CURSORES */
     .cursor-paint .face-part { cursor: crosshair; }
     .cursor-pointer .face-part { cursor: pointer; }
-
     .tooth-number { position: absolute; width: 20px; height: 20px; display: flex; justify-content: center; align-items: center; font-size: 11px; font-weight: 700; color: #adb5bd; z-index: 5; pointer-events: none; }
-
-    /* EIXOS */
+    
     .axis-line { position: absolute; background-color: #e9ecef; }
     .axis-v { top: 80px; bottom: 80px; left: 50%; width: 1px; }
     .axis-h { left: 80px; right: 80px; top: 50%; height: 1px; }
@@ -178,6 +184,41 @@ function getToothSVG($dente, $dados_odonto) {
     @keyframes slideIn { from { opacity: 0; transform: translateX(10px); } to { opacity: 1; transform: translateX(0); } }
     .card-meta { display: flex; justify-content: space-between; font-size: 0.75rem; color: #6c757d; margin-bottom: 3px; }
     .card-detail { font-size: 0.85rem; color: #343a40; line-height: 1.3; }
+
+    /* ===== RESPONSIVIDADE MOBILE (AJUSTE AUTOMÁTICO) ===== */
+    @media (max-width: 992px) {
+        .odonto-container {
+            flex-direction: column; /* Um embaixo do outro */
+            height: auto !important; /* Altura automática controlada pelo JS */
+        }
+
+        .canvas-panel-odonto {
+            width: 100%;
+            overflow: hidden; 
+            min-height: 350px; 
+            display: block; /* Importante para o zoom funcionar */
+        }
+
+        .odontograma-visual {
+            transform-origin: top center; /* Zoom a partir do topo */
+            margin: 10px auto !important;
+        }
+
+        .sidebar-panel-odonto {
+            width: 100%;
+            border-left: none;
+            border-top: 1px solid #dee2e6;
+            height: auto;
+            max-height: 400px; 
+        }
+
+        .toolbar-odonto {
+            flex-wrap: wrap; 
+            justify-content: center;
+            width: 95%;
+            margin: 10px auto;
+        }
+    }
 </style>
 
 <div class="odonto-wrapper-reset">
@@ -187,7 +228,7 @@ function getToothSVG($dente, $dados_odonto) {
         
         <div class="toolbar-odonto">
             <div class="tool-btn btn-eraser" onclick="setTool(0, this)" title="Limpar / Normal">
-                <i class="fa-solid fa-eraser"></i> Limpar
+                <i class="fa-solid fa-eraser"></i> Normal
             </div>
             <div class="tool-btn btn-todo active" onclick="setTool(1, this)" title="Marcar procedimento pendente">
                 <i class="fa-solid fa-triangle-exclamation"></i> A Fazer
@@ -233,11 +274,9 @@ function getToothSVG($dente, $dados_odonto) {
                     echo '<div class="tooth-container" style="' . getPos($centerX, $centerY, $q['radius'], $angle) . '">';
                     echo getToothSVG($dente, $dados_odonto);
                     echo '</div>';
-                    
                     echo '<div class="tooth-number" style="' . getLblPos($centerX, $centerY, $q['radius'], $angle) . '">';
                     echo $dente;
                     echo '</div>';
-                    
                     $angle += $q['step'];
                 }
             }
@@ -248,7 +287,7 @@ function getToothSVG($dente, $dados_odonto) {
     <div class="sidebar-panel-odonto">
         <div class="sidebar-header">
             <h6 class="fw-bold mb-0 text-secondary small text-uppercase">
-                <i class="fa-solid fa-clock-rotate-left me-1"></i> Histórico de Alterações
+                <i class="fa-solid fa-clock-rotate-left me-1"></i> Histórico
             </h6>
         </div>
         <div class="history-list" id="historyListOdonto">
@@ -271,10 +310,7 @@ function getToothSVG($dente, $dados_odonto) {
                     $txtNovo = $labels[$item['status_novo']]['txt'];
                 ?>
                 <div class="history-card" style="border-left-color: <?php echo $cor; ?>">
-                    <div class="card-meta">
-                        <strong>Dente <?php echo $item['dente']; ?></strong>
-                        <span><?php echo $data; ?></span>
-                    </div>
+                    <div class="card-meta"><strong>Dente <?php echo $item['dente']; ?></strong> <span><?php echo $data; ?></span></div>
                     <div class="card-detail">
                         <span class="text-muted"><?php echo ucfirst($item['face']); ?>:</span> 
                         <?php echo $txtAnt; ?> <i class="fa-solid fa-arrow-right small mx-1"></i> <strong><?php echo $txtNovo; ?></strong>
@@ -289,11 +325,7 @@ function getToothSVG($dente, $dados_odonto) {
 
 <script>
 (function() {
-    // ESTADO DA FERRAMENTA (0=Normal, 1=A Fazer, 2=Feito, 3=Extraído)
-    // Inicia com "A Fazer" (1)
     let currentTool = 1;
-
-    // Definição visual dos status
     const VISUAL = {
         0: { fill: 'white',   stroke: '#bbb' },
         1: { fill: '#fbbf24', stroke: '#d97706' },
@@ -301,15 +333,10 @@ function getToothSVG($dente, $dados_odonto) {
         3: { fill: '#ef4444', stroke: '#b91c1c' }
     };
 
-    // TROCA DE FERRAMENTA
     window.setTool = function(statusId, btn) {
         currentTool = statusId;
-        
-        // Atualiza botões
         document.querySelectorAll('.tool-btn').forEach(b => b.classList.remove('active'));
         if(btn) btn.classList.add('active');
-
-        // Atualiza cursor
         const canvas = document.querySelector('.odontograma-visual');
         if (statusId === 0) {
             canvas.classList.remove('cursor-paint');
@@ -320,18 +347,13 @@ function getToothSVG($dente, $dados_odonto) {
         }
     };
 
-    // CLIQUE NO DENTE
     window.handleClickOdonto = function(dente, face, el) {
         const oldStatus = parseInt(el.getAttribute('data-status'));
         let newStatus = currentTool;
-
-        // Se clicar com a mesma ferramenta, não faz nada (ou poderia desmarcar)
         if (oldStatus === newStatus) return;
 
-        // Otimismo: Atualiza a tela antes do AJAX
         updateVisual(el, newStatus);
 
-        // Envia para o servidor
         const formData = new FormData();
         formData.append('ajax_odonto', '1');
         formData.append('dente', dente);
@@ -345,7 +367,6 @@ function getToothSVG($dente, $dados_odonto) {
             if (data.sucesso) {
                 if(data.mudou) addHistory(dente, face, oldStatus, newStatus);
             } else {
-                // Erro: Reverte visual
                 console.error(data.erro);
                 updateVisual(el, oldStatus);
                 alert("Erro ao salvar!");
@@ -364,23 +385,17 @@ function getToothSVG($dente, $dados_odonto) {
         el.setAttribute('data-status', status);
     }
 
-    // LIMPAR TUDO
     window.resetOdonto = function() {
         if(!confirm('Deseja realmente LIMPAR todo o odontograma deste paciente?')) return;
-        
         const formData = new FormData();
         formData.append('ajax_odonto', '1');
         formData.append('acao', 'limpar_tudo');
         formData.append('paciente_id', <?php echo intval($id_paciente); ?>);
-        
         fetch('ajax_odonto.php', { method: 'POST', body: formData })
         .then(res => res.json())
-        .then(data => {
-            if (data.sucesso) location.reload();
-        });
+        .then(data => { if (data.sucesso) location.reload(); });
     };
 
-    // ADICIONAR AO HISTÓRICO VISUAL
     function addHistory(dente, face, stAnt, stNovo) {
         const labels = {
             0: {t: 'Normal', c: '#adb5bd'},
@@ -388,24 +403,48 @@ function getToothSVG($dente, $dados_odonto) {
             2: {t: 'Feito', c: '#10b981'},
             3: {t: 'Extraído', c: '#ef4444'}
         };
-        
         const list = document.getElementById('historyListOdonto');
         const empty = list.querySelector('.text-center');
         if(empty) empty.remove();
-
         const now = new Date().toLocaleString('pt-BR', {hour:'2-digit', minute:'2-digit', day:'2-digit', month:'2-digit'});
-        
         const card = document.createElement('div');
         card.className = 'history-card';
         card.style.borderLeftColor = labels[stNovo].c;
         card.innerHTML = `
             <div class="card-meta"><strong>Dente ${dente}</strong> <span>${now}</span></div>
-            <div class="card-detail">
-                <span class="text-muted">${face.charAt(0).toUpperCase() + face.slice(1)}:</span> 
-                ${labels[stAnt].t} <i class="fa-solid fa-arrow-right small mx-1"></i> <strong>${labels[stNovo].t}</strong>
-            </div>
+            <div class="card-detail"><span class="text-muted">${face}:</span> ${labels[stAnt].t} <i class="fa-solid fa-arrow-right small mx-1"></i> <strong>${labels[stNovo].t}</strong></div>
         `;
         list.insertBefore(card, list.firstChild);
     }
+
+    // === LÓGICA DE ZOOM PARA CELULAR ===
+    function resizeOdontograma() {
+        const visual = document.querySelector('.odontograma-visual');
+        const container = document.querySelector('.canvas-panel-odonto');
+        
+        // Dimensões definidas no PHP
+        const originalWidth = 800; 
+        const originalHeight = 750; 
+        
+        const containerWidth = container.offsetWidth;
+
+        // Aplica o zoom apenas se a tela for menor que o desenho
+        if (containerWidth < originalWidth && containerWidth > 0) {
+            const scale = containerWidth / originalWidth;
+            visual.style.transform = `scale(${scale})`;
+            
+            // Ajusta a altura do container para remover espaço em branco gerado pelo scale
+            // (Altura original * escala) + margem para a toolbar
+            const newHeight = (originalHeight * scale) + 120; 
+            container.style.height = `${newHeight}px`;
+        } else {
+            visual.style.transform = 'scale(1)';
+            container.style.height = 'auto'; // Altura normal em telas grandes
+        }
+    }
+
+    window.addEventListener('load', resizeOdontograma);
+    window.addEventListener('resize', resizeOdontograma);
+
 })();
 </script>
